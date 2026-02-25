@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Google Login Test</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
+    pre { background: #f4f4f4; padding: 16px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; }
+    h2 { color: #333; }
+    #result { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Google Login Test</h2>
+  <p>Click the button below to sign in with Google and test the <code>POST /auth/google</code> API.</p>
+
+  <div id="g_id_onload"
+    data-client_id="605008985125-j0ju294k2n31dr1tbq3c2gd7g038qsa8.apps.googleusercontent.com"
+    data-callback="handleCredentialResponse"
+    data-auto_prompt="false">
+  </div>
+
+  <div class="g_id_signin"
+    data-type="standard"
+    data-size="large"
+    data-theme="outline"
+    data-text="sign_in_with"
+    data-shape="rectangular"
+    data-logo_alignment="left">
+  </div>
+
+  <div id="result"></div>
+
+  <script>
+    const API_BASE = "https://backend.uniconnectmmu.workers.dev";
+
+    async function handleCredentialResponse(response) {
+      const id_token = response.credential;
+      document.getElementById("result").innerHTML = "<p>⏳ Calling API...</p>";
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/google`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_token }),
+        });
+
+        const data = await res.json();
+        document.getElementById("result").innerHTML = `
+          <h3>Status: ${res.status}</h3>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (err) {
+        document.getElementById("result").innerHTML = `<pre style="color:red">Error: ${err.message}</pre>`;
+      }
+    }
+  </script>
+</body>
+</html>

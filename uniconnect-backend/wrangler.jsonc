@@ -1,0 +1,35 @@
+{
+  "name": "backend",
+  "main": "src/worker.js",
+  "workers_dev": true,
+  "preview_urls": false,
+  "compatibility_date": "2026-02-20",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "uniconnect_db",
+      "database_id": "b80d8a9c-24cf-4c36-969a-699c912e9089"
+    }
+  ],
+  "vars": {
+    "JWT_SECRET": "9f3c6e1b4d8a72f5c1e9a0b7d4f2c8e6a1b3d5f7e9c2a4b6d8f0a1c3e5b7d9f1",
+    "GOOGLE_CLIENT_ID": "605008985125-j0ju294k2n31dr1tbq3c2gd7g038qsa8.apps.googleusercontent.com",
+    "GOOGLE_CLIENT_SECRET": "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",
+    "APP_BASE_URL": "https://backend.uniconnectmmu.workers.dev",
+    "FRONTEND_URL": "http://localhost:5173",
+    "EMAIL_API_URL": "https://script.google.com/macros/s/AKfycbz3__wXOrDzQhuQEAAragM4hDw7e44efw93MZQ4T4TmqVGc1FAR2M7glr4CFmIEOmvn/exec"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "head_sampling_rate": 1
+    }
+  }
+}
