@@ -9,123 +9,88 @@ import {
   Search,
   Settings,
   LogOut,
-  Moon,
-  Sun,
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays,
+  Briefcase,
 } from "lucide-react";
 
+import NavItem from "./ui/NavItem";
+
 const menuItems = [
-  { name: "Feed", icon: Home },
-  { name: "Groups", icon: Users },
-  { name: "Collabs", icon: Handshake },
-  { name: "Inbox", icon: Inbox },
-  { name: "Profile", icon: User },
-  { name: "Notifications", icon: Bell },
-  { name: "Search", icon: Search },
+  { name: "Feed", icon: Home, path: "/feed" },
+  { name: "Groups", icon: Users, path: "/groups" },
+  { name: "Collabs", icon: Handshake, path: "/collabs" },
+  { name: "Events", icon: CalendarDays, path: "/events" },
+  { name: "Jobs / Referrals", icon: Briefcase, path: "/jobs" },
+  { name: "Inbox", icon: Inbox, path: "/inbox", badge: 3 },
+  { name: "Notifications", icon: Bell, path: "/notifications", badge: 5 },
+  { name: "Search", icon: Search, path: "/search" },
+  { name: "Profile", icon: User, path: "/profile" },
 ];
 
 const bottomItems = [
-  { name: "Settings", icon: Settings },
-  { name: "Log Out", icon: LogOut },
-];
-
-const mobileTabs = [
-  { name: "Home", icon: Home },
-  { name: "Notifications", icon: Bell },
-  { name: "Search", icon: Search },
-  { name: "Message", icon: Inbox },
-  { name: "Settings", icon: Settings },
+  { name: "Settings", icon: Settings, path: "/settings" },
+  { name: "Log Out", icon: LogOut, path: "/logout" },
 ];
 
 export default function Sidebar() {
-  const [active, setActive] = useState("Feed");
-  const [theme, setTheme] = useState("light");
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <>
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex w-[220px] h-screen bg-white flex-col justify-between px-4 py-6 flex-shrink-0">
+    <div
+      className={`hidden md:flex ${
+        collapsed ? "w-[80px]" : "w-[250px]"
+      } h-screen flex-col justify-between px-3 py-6
+      transition-all duration-300 ease-in-out bg-white border-r border-gray-100`}
+    >
+      {/* Top */}
+      <div>
+        <div className="flex items-center justify-between mb-8 px-2">
 
-        {/* Top */}
-        <div>
-          <h1 className="text-lg font-bold tracking-tight mb-8 px-3">UniConnect</h1>
-
-          <nav className="space-y-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = active === item.name;
-              return (
-                <button
-                  key={item.name}
-                  onClick={() => setActive(item.name)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition ${
-                    isActive
-                      ? "bg-green-100 text-green-700 font-semibold"
-                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-                  }`}
-                >
-                  <Icon size={18} />
-                  {item.name}
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="mt-4 border-t pt-4 space-y-1">
-            {bottomItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.name}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition"
-                >
-                  <Icon size={18} />
-                  {item.name}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Theme Toggle */}
-        <div className="bg-gray-100 rounded-xl p-1 flex">
-          <button
-            onClick={() => setTheme("dark")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs transition ${
-              theme === "dark" ? "bg-white shadow text-gray-800" : "text-gray-500"
+          {/* Logo */}
+          <h1
+            className={`text-lg font-bold tracking-tight text-blue-600 whitespace-nowrap
+            transition-all duration-300
+            ${
+              collapsed
+                ? "opacity-0 -translate-x-4 w-0 overflow-hidden"
+                : "opacity-100 translate-x-0"
             }`}
           >
-            <Moon size={14} /> Dark
-          </button>
+            UniConnect
+          </h1>
+
+          {/* Collapse Button */}
           <button
-            onClick={() => setTheme("light")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs transition ${
-              theme === "light" ? "bg-green-300 shadow text-gray-800" : "text-gray-500"
-            }`}
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-1 rounded hover:bg-gray-100 transition-all duration-200"
           >
-            <Sun size={14} /> Light
+            {collapsed ? (
+              <ChevronRight size={18} />
+            ) : (
+              <ChevronLeft size={18} />
+            )}
           </button>
+
         </div>
+
+        {/* Main Menu */}
+        <nav className="space-y-1">
+          {menuItems.map((item) => (
+            <NavItem key={item.name} item={item} isCollapsed={collapsed} />
+          ))}
+        </nav>
       </div>
 
-      {/* Mobile Bottom Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t flex justify-around items-center px-2 py-2">
-        {mobileTabs.map((item) => {
-          const Icon = item.icon;
-          const isActive = active === item.name;
-          return (
-            <button
-              key={item.name}
-              onClick={() => setActive(item.name)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition ${
-                isActive ? "text-green-600" : "text-gray-400"
-              }`}
-            >
-              <Icon size={20} />
-              <span className="text-[10px]">{item.name}</span>
-            </button>
-          );
-        })}
+      {/* Bottom Menu */}
+      <div>
+        <div className="border-t pt-4 space-y-1">
+          {bottomItems.map((item) => (
+            <NavItem key={item.name} item={item} isCollapsed={collapsed} />
+          ))}
+        </div>
       </div>
-    </>
+    </div>
   );
 }

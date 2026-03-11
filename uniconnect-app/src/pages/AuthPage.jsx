@@ -28,6 +28,15 @@ export default function AuthPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (user) {
+      const timer = setTimeout(() => {
+        navigate('/home')
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [user, navigate])
+
   if (user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -44,10 +53,10 @@ export default function AuthPage() {
             <p><span className="font-medium text-gray-700">Role:</span> {user.role}</p>
           </div>
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/home')}
             className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition text-sm"
           >
-            Go to Dashboard
+            Go to Home
           </button>
         </div>
       </div>

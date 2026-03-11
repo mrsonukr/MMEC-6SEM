@@ -8,71 +8,98 @@ const posts = [
     name: "Ann Levin",
     avatar: "https://randomuser.me/api/portraits/women/44.jpg",
     time: "2 hours ago",
-    text: "Hello everybody! We are preparing a new Prada campaign. Here's a sneak peek ;)",
+    text: "Hello everybody! We are preparing a new Prada campaign.",
     image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
   },
   {
     name: "James Dorwart",
     avatar: "https://randomuser.me/api/portraits/men/32.jpg",
     time: "5 hours ago",
-    text: "Just wrapped up an amazing collab shoot in the mountains. Nature never disappoints 🏔️",
+    text: "Just wrapped up an amazing collab shoot in the mountains.",
     image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4",
   },
   {
     name: "Jocelyn Westervelt",
     avatar: "https://randomuser.me/api/portraits/women/21.jpg",
     time: "Yesterday",
-    text: "New reel dropping tonight. Stay tuned! 🎬",
+    text: "New reel dropping tonight. Stay tuned!",
     image: "",
-  },
-  {
-    name: "Phillip Aminoff",
-    avatar: "https://randomuser.me/api/portraits/men/20.jpg",
-    time: "2 days ago",
-    text: "Behind the scenes from our latest brand shoot. Loved working with this team 🙌",
-    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f",
-  },
-  {
-    name: "Ann Levin",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    time: "2 hours ago",
-    text: "Hello everybody! We are preparing a new Prada campaign. Here's a sneak peek ;)",
-    image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
-  },
-  {
-    name: "James Dorwart",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    time: "5 hours ago",
-    text: "Just wrapped up an amazing collab shoot in the mountains. Nature never disappoints ",
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4",
   },
 ];
 
 export default function HomePage() {
   return (
-    <div className="h-screen flex bg-[#f5f6f8] overflow-hidden">
+    <div className="min-h-screen flex bg-[#fafafa]">
 
       {/* Sidebar */}
-      <Sidebar />
+      <div className="sticky top-0 h-screen">
+        <Sidebar />
+      </div>
 
-      {/* Main content */}
-      <div className="flex flex-1 min-w-0 overflow-hidden items-start h-screen">
+      {/* Main Area */}
+      <div className="flex-1 flex justify-center">
 
-        {/* Feed */}
-        <div className="flex-1 min-w-0 h-full overflow-y-auto no-scrollbar py-6 px-4 md:px-8 pb-24 md:pb-6">
-          <div className="max-w-xl mx-auto space-y-5">
+        <div className="w-full max-w-6xl flex gap-10 px-8 py-10">
+
+          {/* Feed */}
+          <div className="flex-1 max-w-2xl space-y-6">
+          
+            {/* Posts */}
             {posts.map((post, i) => (
               <PostCard key={i} {...post} />
             ))}
-          </div>
-        </div>
 
-        {/* Right Panel — sticky */}
-        <div className="hidden xl:block w-[380px] 2xl:w-[440px] flex-shrink-0 h-full py-6 pr-6 overflow-y-auto no-scrollbar">
-          <SuggestionCard />
+          </div>
+
+          {/* Right Panel */}
+          <div className="hidden lg:block w-[300px]">
+
+            <div className="sticky top-10 space-y-6">
+
+              <SuggestionCard />
+
+              {/* Trends */}
+              <div className="border border-gray-200 rounded-xl p-4 bg-white">
+
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  Trending
+                </h3>
+
+                <div className="space-y-2 text-sm text-gray-500">
+
+                  <div className="hover:text-gray-800 cursor-pointer">
+                    #ReactDevelopment
+                  </div>
+
+                  <div className="hover:text-gray-800 cursor-pointer">
+                    #Hackathon
+                  </div>
+
+                  <div className="hover:text-gray-800 cursor-pointer">
+                    #OpenSource
+                  </div>
+
+                  <div className="hover:text-gray-800 cursor-pointer">
+                    #StartupIdeas
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
         </div>
 
       </div>
+
+      {/* Floating Create Button */}
+      <button className="fixed bottom-8 right-8 bg-blue-600 text-white px-5 py-3 rounded-full text-sm font-medium hover:bg-blue-700 transition">
+        + Create Post
+      </button>
+
     </div>
   );
 }

@@ -33,7 +33,7 @@ export default function LoginPage() {
         email: searchParams.get('email'),
       }
       localStorage.setItem('user', JSON.stringify(user))
-      navigate('/dashboard')
+      navigate('/home')
     }
 
     if (error === 'user_not_found') {
@@ -63,7 +63,7 @@ export default function LoginPage() {
       const data = await res.json()
       if (res.ok) {
         localStorage.setItem('user', JSON.stringify(data.user))
-        navigate('/dashboard')
+        navigate('/home')
       } else {
         setErrorMsg(data.message || 'Invalid email or password.')
       }
