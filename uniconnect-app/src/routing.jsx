@@ -14,29 +14,34 @@ import Jobs from './pages/Jobs'
 import Notification from './pages/Notification'
 import Profile from './pages/user/Profile'
 import Feed from './pages/user/Feed'
+import FeedRedirect from './pages/Feed'
+import Collabs from './pages/Collabs'
 
-const noHeaderRoutes = ['/login-new', '/login', '/forgot-password', '/reset-password', '/home']
+const noHeaderRoutes = ['/login', '/auth', '/forgot-password', '/reset-password', '/home', '/feed', '/groups', '/inbox', '/events', '/jobs', '/notifications', '/profile', '/collabs']
 
 function Layout() {
   const location = useLocation()
-  const showHeader = !noHeaderRoutes.includes(location.pathname)
+  const showHeader = !noHeaderRoutes.some(r => location.pathname.startsWith(r))
+
   return (
     <>
       {showHeader && <Header />}
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/"                element={<Home />} />
+        <Route path="/login"           element={<LoginPage />} />
+        <Route path="/auth"            element={<AuthPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/groups" element={<Groups />}/>
-        <Route path="/inbox" element={<Inbox/>}/>
-        <Route path="/events" element={<Events/>}/>
-        <Route path="/jobs" element={<Jobs/>}/>
-        <Route path="/notifications" element={<Notification/>}/>
-        <Route path="/profile" element={<Profile/>}/>
-        <Route path="/feed" element={<Feed/>}/>
+        <Route path="/reset-password"  element={<ResetPassword />} />
+        <Route path="/home"            element={<HomePage />} />
+        <Route path="/groups"          element={<Groups />} />
+        <Route path="/inbox"           element={<Inbox />} />
+        <Route path="/events"          element={<Events />} />
+        <Route path="/jobs"            element={<Jobs />} />
+        <Route path="/notifications"   element={<Notification />} />
+        <Route path="/profile"         element={<Profile />} />
+        <Route path="/feed"            element={<Feed />} />
+        <Route path="/collabs"         element={<Collabs />} />
+        <Route path="/feed-old"        element={<FeedRedirect />} />
       </Routes>
     </>
   )
