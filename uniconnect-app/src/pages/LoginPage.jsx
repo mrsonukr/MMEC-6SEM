@@ -1,221 +1,170 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { MoveRight, MoveLeft, Eye, EyeOff } from "lucide-react";
-import FloatingInput from "../components/ui/FloatingInput";
-import Button from "../components/ui/Button";
+import { useState, useRef, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { ArrowRight, ArrowLeft, Eye, EyeOff, Zap } from 'lucide-react'
+import FloatingInput from '../components/ui/FloatingInput'
+import Button from '../components/ui/Button'
 
 const BASE = 'https://backend.uniconnectmmu.workers.dev'
+const features = [
+  { emoji: '🚀', label: 'Find hackathon teammates' },
+  { emoji: '🔄', label: 'Exchange skills with peers' },
+  { emoji: '💼', label: 'Discover internships & jobs' },
+  { emoji: '🎓', label: 'Grow your university network' },
+]
 
 export default function LoginPage() {
-  const [step, setStep] = useState("email");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState(false);
-  const [passwordError, setPasswordError] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const emailRef = useRef(null);
-  const passwordRef = useRef(null);
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [step, setStep] = useState('email')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPw, setShowPw] = useState(false)
+  const [emailErr, setEmailErr] = useState(false)
+  const [pwErr, setPwErr] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [errMsg, setErrMsg] = useState('')
+  const emailRef = useRef(null)
+  const pwRef = useRef(null)
+  const navigate = useNavigate()
+  const [sp] = useSearchParams()
 
   useEffect(() => {
-    const success = searchParams.get('success')
-    const error = searchParams.get('error')
-
-    if (success === 'true') {
-      const user = {
-        id: searchParams.get('id'),
-        user_id: searchParams.get('user_id'),
-        full_name: searchParams.get('full_name'),
-        role: searchParams.get('role'),
-        email: searchParams.get('email'),
-      }
-      localStorage.setItem('user', JSON.stringify(user))
-      navigate('/dashboard')
+    if (sp.get('success') === 'true') {
+      localStorage.setItem('user', JSON.stringify({ id: sp.get('id'), user_id: sp.get('user_id'), full_name: sp.get('full_name'), role: sp.get('role'), email: sp.get('email') }))
+      navigate('/home')
     }
-
-    if (error === 'user_not_found') {
-      setErrorMsg('Account nahi hai. Pehle register karo.')
-    } else if (error) {
-      setErrorMsg('Login failed: ' + error)
-    }
+    if (sp.get('error')) setErrMsg(sp.get('error') === 'user_not_found' ? 'No account found.' : 'Login failed.')
   }, [])
 
-  const handleNext = () => {
-    if (!email.trim()) { setEmailError(true); emailRef.current?.focus(); return; }
-    setEmailError(false);
-    setStep("password");
-  };
+  const next = () => {
+    if (!email.trim()) { setEmailErr(true); emailRef.current?.focus(); return }
+    setEmailErr(false); setStep('password')
+  }
 
-  const handleContinue = async () => {
-    if (!password.trim()) { setPasswordError(true); passwordRef.current?.focus(); return; }
-    setPasswordError(false);
-    setErrorMsg("");
-    setLoading(true);
+  const submit = async () => {
+    if (!password.trim()) { setPwErr(true); pwRef.current?.focus(); return }
+    setPwErr(false); setErrMsg(''); setLoading(true)
     try {
-      const res = await fetch(`${BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
+      const res = await fetch(`${BASE}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
       const data = await res.json()
-      if (res.ok) {
-        localStorage.setItem('user', JSON.stringify(data.user))
-        navigate('/dashboard')
-      } else {
-        setErrorMsg(data.message || 'Invalid email or password.')
-      }
-    } catch {
-      setErrorMsg('Network error. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  };
-
-  const handleGoogle = () => {
-    window.location.href = `${BASE}/auth/google`
-  };
+      if (res.ok) { localStorage.setItem('user', JSON.stringify(data.user)); navigate('/home') }
+      else setErrMsg(data.message || 'Invalid credentials.')
+    } catch { setErrMsg('Network error.') } finally { setLoading(false) }
+  }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-[#0A0A0A]">
 
-      {/* LEFT IMAGE */}
-      <div className="w-1/2 bg-white hidden md:block">
-        <img
-          src="/loginpage.jpg"
-          alt="login"
-          className="w-full p-5 h-full object-cover"
-        />
-      </div>
+      {/* Left panel — desktop only */}
+      <div className="hidden md:flex w-1/2 relative overflow-hidden flex-col items-center justify-center px-14 bg-[#0D0D0D] border-r border-[#111]/[0.06]">
+        <div className="absolute top-24 left-20 w-64 h-64 rounded-full bg-violet-700/15 blur-3xl pointer-events-none animate-float" />
+        <div className="absolute bottom-20 right-16 w-80 h-80 rounded-full bg-cyan-700/10 blur-3xl pointer-events-none" style={{ animation: 'float 4.5s ease-in-out infinite reverse' }} />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(124,58,237,0.06),transparent_60%)] pointer-events-none" />
 
-      {/* RIGHT SIDE */}
-      <div className="w-full md:w-1/2 flex items-start md:items-center justify-center bg-white px-8 pt-16 md:pt-0">
-        <div className="w-full max-w-md">
-
-          {/* LOGO */}
-          <div className="flex justify-center mb-6">
-            <img
-              src="https://download.logo.wine/logo/LinkedIn/LinkedIn-Logo.wine.png"
-              alt="logo"
-              className="h-16 object-contain"
-            />
+        <div className="relative z-10 max-w-xs w-full">
+          <div className="flex items-center gap-3 mb-12 animate-slide-left">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-violet-900 flex items-center justify-center shadow-lg shadow-violet-900/60">
+              <Zap size={20} className="text-white" fill="white" />
+            </div>
+            <span className="font-display text-xl text-[#F9FAFB] font-bold">UniConnect</span>
           </div>
 
-          {/* HEADING */}
-          {step === "email" ? (
-            <h2 className="text-2xl font-semibold mb-8 text-center">
-              Welcome back
-            </h2>
-          ) : (
-            <div className="flex items-center gap-3 mb-8">
-              <button
-                onClick={() => setStep("email")}
-                className="text-gray-500 hover:text-black transition"
-              >
-                <MoveLeft size={20} />
-              </button>
-              <span className="text-xl font-semibold text-gray-800">{email}</span>
+          <h1 className="font-display text-5xl font-bold text-[#F9FAFB] leading-[1.1] mb-4 animate-fade-up">
+            Your campus,<br />
+            <span className="text-gradient">connected.</span>
+          </h1>
+          <p className="text-[#6B7280] text-sm mb-10 leading-relaxed animate-fade-up stagger-1">
+            The network built for students who build, create and collaborate.
+          </p>
+
+          <div className="space-y-3.5">
+            {features.map((f, i) => (
+              <div key={f.label} className="flex items-center gap-3 animate-slide-left" style={{ animationDelay: `${(i + 2) * 80}ms` }}>
+                <div className="w-8 h-8 rounded-xl bg-white/[0.05] border border-[#111]/[0.08] flex items-center justify-center text-base flex-shrink-0">
+                  {f.emoji}
+                </div>
+                <span className="text-[#9CA3AF] text-sm">{f.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Right panel — full screen on mobile */}
+      <div className="w-full md:w-1/2 flex flex-col items-center justify-center bg-[#0A0A0A] px-6 sm:px-8 py-10 sm:py-16 min-h-screen">
+
+        {/* Mobile logo */}
+        <div className="md:hidden flex items-center gap-3 mb-8 self-start">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-violet-900 flex items-center justify-center shadow-lg shadow-violet-900/60">
+            <Zap size={16} className="text-white" fill="white" />
+          </div>
+          <span className="font-display text-lg text-[#F9FAFB] font-bold">UniConnect</span>
+        </div>
+
+        <div className="w-full max-w-sm">
+          {step === 'email' ? (
+            <div className="animate-fade-up">
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#F9FAFB] mb-1">Welcome back</h2>
+              <p className="text-sm text-[#6B7280] mb-8 sm:mb-10">Sign in to your account</p>
+
+              <div className="mb-7 sm:mb-8">
+                <FloatingInput ref={emailRef} lowercase label="Email address" type="email" value={email}
+                  onChange={e => { setEmail(e.target.value); setEmailErr(false) }} autoFocus showError={emailErr} />
+              </div>
+
+              <Button fullWidth icon={<ArrowRight size={16} />} onClick={next} className="rounded-full mb-5 sm:mb-6">Continue</Button>
+
+              <div className="flex items-center mb-5 sm:mb-6">
+                <div className="flex-1 divider" />
+                <span className="px-4 text-xs text-[#4B5563] tracking-widest uppercase">or</span>
+                <div className="flex-1 divider" />
+              </div>
+
+              <Button fullWidth variant="outline" onClick={() => window.location.href = `${BASE}/auth/google`} className="gap-3 mb-6 sm:mb-8">
+                <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 48 48">
+                  <path fill="#EA4335" d="M24 9.5c3.14 0 5.95 1.08 8.17 2.84l6.1-6.1C34.36 3.1 29.45 1 24 1 14.82 1 7.07 6.48 3.64 14.22l7.1 5.52C12.4 13.67 17.73 9.5 24 9.5z" />
+                  <path fill="#4285F4" d="M46.52 24.5c0-1.64-.15-3.22-.42-4.74H24v8.98h12.67c-.55 2.94-2.2 5.43-4.67 7.1l7.18 5.58C43.36 37.28 46.52 31.36 46.52 24.5z" />
+                  <path fill="#FBBC05" d="M10.74 28.26A14.6 14.6 0 0 1 9.5 24c0-1.48.25-2.91.7-4.26l-7.1-5.52A23.93 23.93 0 0 0 0 24c0 3.87.93 7.53 2.56 10.77l8.18-6.51z" />
+                  <path fill="#34A853" d="M24 47c5.45 0 10.02-1.8 13.36-4.9l-7.18-5.58c-1.8 1.2-4.1 1.98-6.18 1.98-6.27 0-11.6-4.17-13.26-9.74l-8.18 6.51C7.07 41.52 14.82 47 24 47z" />
+                </svg>
+                Continue with Google
+              </Button>
+
+              <p className="text-center text-xs text-[#4B5563]">
+                New here? <span className="text-violet-400 cursor-pointer hover:underline font-medium">Create account</span>
+              </p>
             </div>
-          )}
-
-          {/* STEP: EMAIL */}
-          {step === "email" && (
-            <>
-              <div className="mb-6">
-                <FloatingInput
-                  ref={emailRef}
-                  lowercase
-                  label="Enter your email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setEmailError(false); }}
-                  autoFocus
-                  showError={emailError}
-                />
-              </div>
-
-              <Button
-                fullWidth
-                icon={<MoveRight size={18} />}
-                onClick={handleNext}
-              >
-                Next
-              </Button>
-
-              {/* Divider */}
-              <div className="flex items-center my-6">
-                <div className="flex-1 h-px bg-gray-300"></div>
-                <span className="px-3 text-gray-500 text-sm">OR</span>
-                <div className="flex-1 h-px bg-gray-300"></div>
-              </div>
-
-              {/* Google Login */}
-              <Button fullWidth variant="outline" onClick={handleGoogle}>
-                <img
-                  src="https://www.svgrepo.com/show/475656/google-color.svg"
-                  alt="google"
-                  className="w-5 h-5"
-                />
-                Login with Google
-              </Button>
-            </>
-          )}
-
-          {/* STEP: PASSWORD */}
-          {step === "password" && (
-            <>
-              <div className="mb-6 relative">
-                <FloatingInput
-                  ref={passwordRef}
-                  label="Enter your password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setPasswordError(false); }}
-                  autoFocus
-                  showError={passwordError}
-                />
+          ) : (
+            <div className="animate-fade-up">
+              <button onClick={() => setStep('email')} className="flex items-center gap-2 text-[#6B7280] hover:text-[#D1D5DB] mb-6 sm:mb-7 text-sm transition-colors group">
+                <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-1 duration-200" /> Back
+              </button>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#F9FAFB] mb-1">Enter password</h2>
+              <p className="text-sm text-violet-400 font-medium mb-6 sm:mb-8 truncate">{email}</p>
+              <div className="mb-5 sm:mb-6 relative">
+                <FloatingInput ref={pwRef} label="Password" type={showPw ? 'text' : 'password'} value={password}
+                  onChange={e => { setPassword(e.target.value); setPwErr(false) }} autoFocus showError={pwErr} />
                 {password && (
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((p) => !p)}
-                    className="absolute right-0 top-3 text-gray-400 hover:text-gray-700 transition"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  <button type="button" onClick={() => setShowPw(p => !p)}
+                    className="absolute right-0 top-3 text-[#4B5563] hover:text-violet-400 transition-colors">
+                    {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 )}
               </div>
-
-              {errorMsg && (
-                <p className="text-red-500 text-xs mb-3">{errorMsg}</p>
+              {errMsg && (
+                <div className="text-red-400 text-xs mb-4 bg-red-950/40 px-4 py-2.5 rounded-xl border border-red-900/50 animate-pop-in">{errMsg}</div>
               )}
-
-              <Button
-                fullWidth
-                icon={<MoveRight size={18} />}
-                onClick={handleContinue}
-                disabled={loading}
-              >
-                {loading ? 'Signing in...' : 'Continue'}
+              <Button fullWidth icon={loading ? null : <ArrowRight size={16} />} onClick={submit} disabled={loading} className="rounded-full mb-4 sm:mb-5">
+                {loading
+                  ? <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-[#111]/30 border-t-white rounded-full animate-spin-slow" />Signing in…</span>
+                  : 'Sign in'
+                }
               </Button>
-
-              {/* Divider */}
-              <div className="flex items-center my-6 mb-4">
-                <div className="flex-1 h-px bg-gray-300"></div>
-                <span className="px-3 text-gray-500 text-sm">OR</span>
-                <div className="flex-1 h-px bg-gray-300"></div>
-              </div>
-
-              {/* Forgot Password */}
-              <Button variant="ghost" size="sm" fullWidth onClick={() => navigate('/forgot-password')}>
+              <Button variant="ghost" size="sm" fullWidth onClick={() => navigate('/forgot-password')} className="text-xs text-[#6B7280] hover:text-violet-400">
                 Forgot password?
               </Button>
-            </>
+            </div>
           )}
-
         </div>
       </div>
     </div>
-  );
+  )
 }
