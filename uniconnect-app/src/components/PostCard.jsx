@@ -82,7 +82,7 @@ export default function PostCard({ post }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-3xl w-full max-w-4xl mx-4 h-[600px] flex overflow-hidden">
             {/* Left Side - Media */}
-            <div className="w-1/2 border-r border-gray-200 flex items-center justify-center bg-gray-50 rounded-tl-3xl">
+            <div className="w-1/2 border-r border-gray-200 flex items-center justify-center bg-black rounded-tl-3xl">
               {post.image ? (
                 <img 
                   src={post.image} 
