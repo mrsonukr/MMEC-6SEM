@@ -7,8 +7,9 @@ import ResetPassword from './pages/ResetPassword'
 import AuthPage from './pages/AuthPage'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/user/HomePage'
+import Profile from './pages/user/Profile'
 
-const noHeaderRoutes = ['/login-new', '/login', '/forgot-password', '/reset-password', '/home']
+const noHeaderRoutes = ['/login-new', '/login', '/forgot-password', '/reset-password', '/home', '/profile']
 
 function Layout() {
   const location = useLocation()
@@ -23,6 +24,7 @@ function Layout() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/home" element={<HomePage />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </>
   )
