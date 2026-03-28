@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import Sidebar from '../../components/Sidebar'
-import { MapPin, Briefcase, GraduationCap, Plus, Edit3, ExternalLink, Award, Users } from 'lucide-react'
+import PostInput from '../../components/PostInput'
+import PostCard from '../../components/PostCard'
+import DropdownMenu from '../../components/DropdownMenu'
+import { MapPin, Briefcase, GraduationCap, Plus, Edit3, ExternalLink, Award, Users, MoreHorizontal } from 'lucide-react'
 
 const posts = [
   { text: 'Excited to collaborate with amazing developers for Hackathon 2026 🚀', time: '2 hours ago' },
@@ -18,63 +21,119 @@ const connections = [
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState('about')
+  const [showDropdown, setShowDropdown] = useState(false)
+
+  const dropdownItems = [
+    {
+      label: 'Upload cover',
+      icon: <Plus size={18} />,
+      onClick: () => console.log('Upload cover')
+    },
+    {
+      label: 'View cover',
+      icon: <ExternalLink size={18} />,
+      onClick: () => console.log('View cover')
+    },
+    {
+      label: 'Remove cover',
+      icon: '🗑️',
+      onClick: () => console.log('Remove cover'),
+      danger: true
+    }
+  ]
 
   return (
-    <div className="min-h-screen flex bg-gray-50 page-enter">
-      <div className="sticky top-0 h-screen">
-        <Sidebar />
-      </div>
+    <div className="h-screen flex overflow-hidden relative">
+      <Sidebar />
 
-      <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
-        <div className="max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <div className="flex-1 flex flex-col absolute inset-0 pointer-events-none">
+        {/* Top Tabs */}
+        <div className="flex gap-8 font-medium text-lg p-4 justify-center text-[#a9aba6] pointer-events-auto">
+          <a href="#" className="text-black">Profile</a>
+        </div>
 
-          {/* Cover + Avatar */}
-          <div className="card overflow-hidden mb-4 sm:mb-5 animate-fade-up bg-white rounded-xl border border-gray-200">
-            <div className="h-28 sm:h-40 relative overflow-hidden"
-              style={{ background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 55%, #EC4899 100%)' }}
-            >
-              <div className="absolute inset-0 opacity-10"
-                style={{ backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 30px, rgba(255,255,255,0.4) 30px, rgba(255,255,255,0.4) 31px)` }}
-              />
-              <div className="absolute top-3 right-3">
-                <button className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs px-3 py-1.5 rounded-full border border-white/20 transition-all">
-                  <Edit3 size={11} /> Edit Cover
-                </button>
-              </div>
-            </div>
-
-            <div className="px-4 sm:px-6 pb-4 sm:pb-5">
-              <div className="flex items-end justify-between -mt-8 sm:-mt-10 mb-3 sm:mb-4">
-                <div className="relative">
-                  <img
-                    src="https://randomuser.me/api/portraits/men/75.jpg"
-                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full ring-4 ring-white object-cover"
-                  />
-                  <span className="absolute bottom-1 right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-emerald-400 rounded-full border-2 border-white" />
+        {/* Feed Container */}
+        <div className="flex-1 p-4 bg-white border border-gray-300 rounded-t-3xl w-full max-w-2xl mx-auto overflow-y-auto pointer-events-auto no-scrollbar">
+          
+          {/* Profile Header */}
+          <div className="mb-6">
+            {/* Cover + Avatar */}
+            <div className="overflow-hidden mb-4 -mx-4 -mt-4 relative">
+              <div className="h-40 relative overflow-hidden bg-gray-800">
+                <div className="absolute inset-0 opacity-10"
+                  style={{ backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 30px, rgba(255,255,255,0.4) 30px, rgba(255,255,255,0.4) 31px)` }}
+                />
+                <div className="absolute top-3 right-3">
+                  <button 
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
+                    onClick={() => setShowDropdown(!showDropdown)}
+                  >
+                    <MoreHorizontal className="w-5 h-5 text-white group-hover:text-black" />
+                  </button>
                 </div>
               </div>
+              
+              <DropdownMenu 
+                isOpen={showDropdown} 
+                onClose={() => setShowDropdown(false)}
+                items={dropdownItems}
+              />
 
-              <h1 className="font-display text-xl sm:text-2xl font-semibold text-gray-900">Rahul Sharma</h1>
+              <div className="px-4 pb-5">
+                <div className="flex items-end justify-between -mt-10 mb-4">
+                  <div className="relative">
+                    <img
+                      src="https://randomuser.me/api/portraits/men/75.jpg"
+                      className="w-20 h-20 rounded-full ring-4 ring-white object-cover"
+                    />
+                    <span className="absolute bottom-1 right-1 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white" />
+                  </div>
+                </div>
 
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 sm:mt-3 text-xs text-gray-500">
-                <span className="flex items-center gap-1"><MapPin size={11} /> Delhi, India</span>
-                <span className="flex items-center gap-1"><GraduationCap size={11} /> MMU University</span>
-                <span className="flex items-center gap-1"><Briefcase size={11} /> Apple Corporation</span>
-                <div className="flex items-center gap-1.5 ml-auto">
+                <h1 className="text-2xl font-semibold text-gray-900">Rahul Sharma</h1>
+                <div className="flex items-center gap-3 text-gray-500 text-sm">
+                  <p>@rahulsharma</p>
+                  <span>•</span>
                   <span className="flex items-center gap-1.5">
                     <div className="flex -space-x-1.5">
                       {connections.map((src, i) => (
                         <img key={i} src={src} className="w-4 h-4 rounded-full border border-white" />
                       ))}
                     </div>
-                    <span className="text-violet-600 font-medium cursor-pointer hover:underline">60 connections</span>
-                  </span>|
-                  <button className="bg-violet-600 hover:bg-violet-700 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-colors">
-                    <Edit3 size={11} /> <span className="hidden sm:inline">Edit Profile</span><span className="sm:hidden">Edit</span>
-                  </button>
+                    <span className="text-black font-medium cursor-pointer hover:underline">60 connections</span>
+                  </span>
                 </div>
+
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 text-xs text-gray-500">
+                  <span className="flex items-center gap-1"><MapPin size={11} /> Delhi, India</span>
+                  <span className="flex items-center gap-1"><GraduationCap size={11} /> MMU University</span>
+                  <span className="flex items-center gap-1"><Briefcase size={11} /> Apple Corporation</span>
+                </div>
+                
+                <button className="w-full bg-white hover:bg-gray-50 text-black text-sm font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition-colors mt-4 border border-gray-300">
+                  <Edit3 size={14} /> Edit Profile
+                </button>
               </div>
             </div>
+          </div>
+
+          {/* Post Input */}
+          <PostInput />
+
+          {/* Posts */}
+          <div className="space-y-4">
+            {posts.map((post, index) => (
+              <PostCard key={index} post={{
+                id: index + 1,
+                author: "Rahul Sharma",
+                time: post.time,
+                content: post.text,
+                profileImage: "https://randomuser.me/api/portraits/men/75.jpg",
+                likes: Math.floor(Math.random() * 50) + 5,
+                comments: Math.floor(Math.random() * 20) + 1,
+                shares: Math.floor(Math.random() * 10) + 1
+              }} />
+            ))}
           </div>
         </div>
       </div>
