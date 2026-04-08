@@ -38,11 +38,23 @@ export async function localLogin(request, env) {
 
   const { access_token, session_id } = await createSession(env, request, user);
 
+  // Check if user has username set
+  if (!user.username) {
+    return Response.json({
+      success: true,
+      message: "Login successful",
+      access_token,
+      session_id,
+      username: false
+    });
+  }
+
   return Response.json({
     success: true,
     message: "Login successful",
     access_token,
     session_id,
+    username: true
   });
 }
 

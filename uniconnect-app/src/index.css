@@ -25,3 +25,18 @@ input:-webkit-autofill:focus {
   -ms-overflow-style: none;  
   scrollbar-width: none;  
 }
+
+.comment-media-swiper .swiper-button-next,
+.comment-media-swiper .swiper-button-prev {
+  color: #ffffff;
+}
+
+.comment-media-swiper .swiper-pagination-bullet {
+  background: #ffffff;
+  opacity: 0.7;
+}
+
+.comment-media-swiper .swiper-pagination-bullet-active {
+  background: #ffffff;
+  opacity: 1;
+}

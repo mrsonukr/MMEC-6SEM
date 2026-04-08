@@ -1,12 +1,12 @@
 export async function handleUsers(request, env, url, method) {
   if (url.pathname === "/users" && method === "POST") {
     const body = await request.json();
-    const { user_id, full_name, role, email } = body;
+    const { user_id, full_name, role, email, bio } = body;
 
     await env.DB.prepare(`
-      INSERT INTO users (user_id, full_name, role, email)
-      VALUES (?, ?, ?, ?)
-    `).bind(user_id, full_name, role, email).run();
+      INSERT INTO users (user_id, full_name, role, email, bio)
+      VALUES (?, ?, ?, ?, ?)
+    `).bind(user_id, full_name, role, email, bio || null).run();
 
     return Response.json({ success: true, message: "User created" }, { status: 201 });
   }
@@ -29,13 +29,13 @@ export async function handleUsers(request, env, url, method) {
   if (url.pathname.startsWith("/users/") && method === "PUT") {
     const id = url.pathname.split("/")[2];
     const body = await request.json();
-    const { user_id, full_name, role, email } = body;
+    const { user_id, full_name, role, email, bio } = body;
 
     await env.DB.prepare(`
       UPDATE users
-      SET user_id = ?, full_name = ?, role = ?, email = ?, updated_at = CURRENT_TIMESTAMP
+      SET user_id = ?, full_name = ?, role = ?, email = ?, bio = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).bind(user_id, full_name, role, email, id).run();
+    `).bind(user_id, full_name, role, email, bio || null, id).run();
 
     return Response.json({ success: true, message: "User updated" });
   }

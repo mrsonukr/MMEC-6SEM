@@ -3,6 +3,10 @@ import { Plus } from "lucide-react";
 import Sidebar from "../../components/Sidebar";
 import PostInput from "../../components/PostInput";
 import PostCard from "../../components/PostCard";
+import { usernameAPI } from "../../utils/api";
+
+// Default profile image
+const DEFAULT_PROFILE_IMAGE = '/default-avatar.png';
 
 export default function HomePage() {
   const [posts, setPosts] = useState([]);
@@ -11,10 +15,46 @@ export default function HomePage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [openPostModal, setOpenPostModal] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     fetchPosts();
+    fetchUserProfile();
   }, []);
+
+  const fetchUserProfile = async () => {
+    // Check if user data is already cached in localStorage
+    const cachedUser = localStorage.getItem('user');
+    const cacheTimestamp = localStorage.getItem('userCacheTimestamp');
+    const now = Date.now();
+    
+    // Clear cache if it's older than 5 minutes or on page refresh
+    if (cachedUser && cacheTimestamp) {
+      const cacheAge = now - parseInt(cacheTimestamp);
+      if (cacheAge < 30 * 1000) { // 30 seconds
+        try {
+          const parsedUser = JSON.parse(cachedUser);
+          setUser(parsedUser);
+          return; // Use cache if it's fresh
+        } catch (error) {
+          console.error('Error parsing cached user data:', error);
+        }
+      }
+    }
+
+    // Fetch fresh data if no cache or cache is expired
+    try {
+      const response = await usernameAPI.getUserProfile();
+      if (response.success) {
+        setUser(response.user);
+        // Cache the user data with timestamp
+        localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage.setItem('userCacheTimestamp', now.toString());
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -131,7 +171,7 @@ export default function HomePage() {
         <div className="flex-1 p-4 bg-white border border-gray-300 rounded-t-3xl w-full max-w-2xl mx-auto overflow-y-auto pointer-events-auto no-scrollbar feed-container">
           
           {/* Post Input */}
-          <PostInput externalOpen={openPostModal} onModalClose={() => setOpenPostModal(false)} />
+          <PostInput userProfile={user} externalOpen={openPostModal} onModalClose={() => setOpenPostModal(false)} />
 
           {/* Posts */}
           <div className="space-y-4">

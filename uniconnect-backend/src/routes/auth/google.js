@@ -82,7 +82,17 @@ export async function googleCallback(request, env, url) {
 
   const { access_token, session_id } = await createSession(env, request, user);
 
-  const params = new URLSearchParams({ access_token, session_id });
+  // Check if user has username set
+  if (!user.username) {
+    const params = new URLSearchParams({ 
+      access_token, 
+      session_id, 
+      username: 'false' 
+    });
+    return Response.redirect(`${frontendUrl}/auth?success=true&${params.toString()}`, 302);
+  }
+
+  const params = new URLSearchParams({ access_token, session_id, username: 'true' });
 
   return Response.redirect(`${frontendUrl}/auth?success=true&${params.toString()}`, 302);
 }
@@ -127,10 +137,22 @@ export async function googleTokenLogin(request, env) {
 
   const { access_token, session_id } = await createSession(env, request, user);
 
+  // Check if user has username set
+  if (!user.username) {
+    return Response.json({
+      success: true,
+      message: "Login successful",
+      access_token,
+      session_id,
+      username: false
+    });
+  }
+
   return Response.json({
     success: true,
     message: "Login successful",
     access_token,
     session_id,
+    username: true
   });
 }

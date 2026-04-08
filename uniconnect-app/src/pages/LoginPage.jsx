@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { MoveRight, MoveLeft, Eye, EyeOff } from "lucide-react";
 import FloatingInput from "../components/ui/FloatingInput";
 import Button from "../components/ui/Button";
+import { usernameAPI } from "../utils/api";
 
 const BASE = 'https://backend.uniconnectmmu.workers.dev'
 
@@ -20,28 +21,47 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  useEffect(() => {
-    const success = searchParams.get('success')
-    const error = searchParams.get('error')
+  const handleGoogle = () => {
+    window.location.href = `${BASE}/auth/google`
+  };
 
-    if (success === 'true') {
-      const user = {
-        id: searchParams.get('id'),
-        user_id: searchParams.get('user_id'),
-        full_name: searchParams.get('full_name'),
-        role: searchParams.get('role'),
-        email: searchParams.get('email'),
+  // Clear old session data and set fresh session
+  const clearOldSessionAndSetNew = (sessionToken) => {
+    // Clear old session data
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('user')
+    localStorage.removeItem('selectedUser')
+    
+    // Set fresh session token
+    localStorage.setItem('authToken', sessionToken)
+  }
+
+  // Check username status and handle redirect logic
+  const checkUsernameStatusAndRedirect = async (sessionToken) => {
+    try {
+      // Clear old session and set fresh token
+      clearOldSessionAndSetNew(sessionToken)
+      
+      // Check username status from backend
+      const response = await usernameAPI.checkUsernameStatus()
+      
+      if (response.success) {
+        if (response.username) {
+          // User has username, go to home
+          navigate('/')
+        } else {
+          // User doesn't have username, go to welcome page
+          navigate('/welcome')
+        }
+      } else {
+        throw new Error(response.message || 'Failed to check username status')
       }
-      localStorage.setItem('user', JSON.stringify(user))
-      navigate('/dashboard')
+    } catch (error) {
+      console.error('Error checking username status:', error)
+      // Fallback to welcome page if API fails
+      navigate('/welcome')
     }
-
-    if (error === 'user_not_found') {
-      setErrorMsg('Account nahi hai. Pehle register karo.')
-    } else if (error) {
-      setErrorMsg('Login failed: ' + error)
-    }
-  }, [])
+  }
 
   const handleNext = () => {
     if (!email.trim()) { setEmailError(true); emailRef.current?.focus(); return; }
@@ -62,8 +82,15 @@ export default function LoginPage() {
       })
       const data = await res.json()
       if (res.ok) {
-        localStorage.setItem('user', JSON.stringify(data.user))
-        navigate('/dashboard')
+        // Check username field from backend response
+        if (data.username === false) {
+          // Backend says no username, set session and go to welcome
+          clearOldSessionAndSetNew(data.session_id)
+          navigate('/welcome')
+        } else {
+          // Backend says username exists, check username status and go to /
+          await checkUsernameStatusAndRedirect(data.session_id)
+        }
       } else {
         setErrorMsg(data.message || 'Invalid email or password.')
       }
@@ -74,9 +101,39 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogle = () => {
-    window.location.href = `${BASE}/auth/google`
-  };
+  useEffect(() => {
+    const success = searchParams.get('success')
+    const error = searchParams.get('error')
+    const accessToken = searchParams.get('access_token')
+    const sessionId = searchParams.get('session_id')
+    const usernameParam = searchParams.get('username')
+
+    if (success === 'true') {
+      const token = sessionId || accessToken
+      
+      if (token) {
+        // Clear old session data before setting new one
+        clearOldSessionAndSetNew(token)
+        
+        // Check username parameter from backend
+        if (usernameParam === 'false') {
+          // Backend says no username, go to welcome page
+          navigate('/welcome')
+        } else {
+          // Backend says username exists, get profile and go to dashboard
+          getUserProfileAndRedirect(token)
+        }
+      } else {
+        setErrorMsg('No session token found')
+      }
+    }
+
+    if (error === 'user_not_found') {
+      setErrorMsg('Account nahi hai. Pehle register karo.')
+    } else if (error) {
+      setErrorMsg('Login failed: ' + error)
+    }
+  }, [])
 
   return (
     <div className="min-h-screen flex">
@@ -97,7 +154,7 @@ export default function LoginPage() {
           {/* LOGO */}
           <div className="flex justify-center mb-6">
             <img
-              src="https://download.logo.wine/logo/LinkedIn/LinkedIn-Logo.wine.png"
+              src="/logo.svg"
               alt="logo"
               className="h-16 object-contain"
             />

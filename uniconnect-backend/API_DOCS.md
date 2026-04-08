@@ -252,6 +252,89 @@ Blank endpoint — add your email sending logic inside `src/routes/auth.js`.
 
 ---
 
+### Set Username
+**POST** `/auth/set-username`
+
+**Headers:**
+```
+Authorization: Bearer <session_id>
+```
+
+**Request Body (JSON):**
+```json
+{
+  "username": "john_doe123"
+}
+```
+
+> `username` must be 3-20 characters, lowercase letters a-z, numbers 0-9, underscore _, and dot .
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Username set successfully.",
+  "username": "john_doe123"
+}
+```
+
+**Response `400`:**
+```json
+{
+  "success": false,
+  "message": "Username must be 3-20 characters, lowercase letters, numbers, underscores, and dots only."
+}
+```
+
+**Response `409`:**
+```json
+{
+  "success": false,
+  "message": "Username is already taken."
+}
+```
+
+---
+
+### Get Username Suggestions
+**GET** `/auth/username-suggestions`
+
+**Headers:**
+```
+Authorization: Bearer <session_id>
+```
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "suggestions": ["john.doe", "john_doe", "jdoe123", "john_doe45", "j123"]
+}
+```
+
+---
+
+### Check Username Availability
+**GET** `/auth/check-username?username=<username>`
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "available": true
+}
+```
+
+**Response `400`:**
+```json
+{
+  "success": false,
+  "message": "Invalid username format."
+}
+```
+
+---
+
 ## Quick Test with cURL
 
 ```bash

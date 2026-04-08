@@ -104,7 +104,7 @@ export default function ForgotPassword() {
           {/* LOGO */}
           <div className="flex justify-center mb-6">
             <img
-              src="https://download.logo.wine/logo/LinkedIn/LinkedIn-Logo.wine.png"
+              src="/logo.svg"
               alt="logo"
               className="h-16 object-contain"
             />

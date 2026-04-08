@@ -11,7 +11,10 @@ export default defineConfig({
   ],
 
   server: {
-    host: true,        // allow all network (0.0.0.0)
-    port: 5173,        // optional
+    host: '0.0.0.0',
+    port: 5173,
+    strictPort: true,
+    open: false,
+    allowedHosts: ['hello.mrsonu.in'],
   },
 })

@@ -1,9 +1,12 @@
 CREATE TABLE IF NOT EXISTS users (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id     TEXT UNIQUE NOT NULL,
+  username    TEXT UNIQUE,
   full_name   TEXT NOT NULL,
   role        TEXT CHECK(role IN ('student','teacher')) NOT NULL,
   email       TEXT UNIQUE NOT NULL,
+  profile_picture_url TEXT,
+  bio         TEXT,
   created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
