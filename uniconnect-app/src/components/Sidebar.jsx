@@ -4,7 +4,7 @@ import {
   Home, Search, Bell, User, Settings
 } from 'lucide-react'
 
-const menuItems = [
+const baseMenuItems = [
   { name: 'Home',          icon: Home,         path: '/' },
   { name: 'Search',        icon: Search,       path: '/search' },
   { name: 'Notifications', icon: Bell,         path: '/notifications', badge: 5 },
@@ -51,6 +51,18 @@ function NavItem({ item, isCollapsed, index, onCollapse }) {
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
+  const accountPath = (() => {
+    try {
+      const cached = localStorage.getItem('user')
+      const username = cached ? JSON.parse(cached)?.username : ''
+      return username ? `/${username}` : '/profile'
+    } catch {
+      return '/profile'
+    }
+  })()
+  const menuItems = baseMenuItems.map((item) =>
+    item.name === 'Account' ? { ...item, path: accountPath } : item
+  )
 
   return (
     <div className={`

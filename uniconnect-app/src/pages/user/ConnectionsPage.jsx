@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Sidebar from '../../components/Sidebar'
+import { Link } from 'react-router-dom'
 import { Search, X, Users, Loader2 } from 'lucide-react'
 import { connectionsAPI } from '../../utils/api'
 
@@ -148,7 +149,13 @@ export default function ConnectionsPage() {
                 {connections.map((person, index) => (
                   <div key={person.id || person.username || index}>
                     <div className="flex items-center justify-between p-3 rounded-lg">
-                      <div className="flex items-center gap-3 min-w-0">
+                      <Link
+                        to={person.username ? `/${person.username}` : '#'}
+                        className="flex items-center gap-3 min-w-0"
+                        onClick={(e) => {
+                          if (!person.username) e.preventDefault()
+                        }}
+                      >
                         <img
                           src={person.dp || DEFAULT_PROFILE_IMAGE}
                           alt={person.name}
@@ -165,7 +172,7 @@ export default function ConnectionsPage() {
                             {person.username}
                           </p>
                         </div>
-                      </div>
+                      </Link>
                       <button
                         onClick={() => handleDisconnect(person)}
                         disabled={disconnecting[person.username]}

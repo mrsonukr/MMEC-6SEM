@@ -78,13 +78,19 @@ const noHeaderRoutes = ['/login-new', '/login', '/forgot-password', '/reset-pass
 
 function Layout() {
   const location = useLocation()
+  const isDynamicConnectionsRoute = (() => {
+    const path = location.pathname
+    if (!path.startsWith('/') || path === '/') return false
+    const segments = path.split('/').filter(Boolean)
+    return segments.length === 2 && segments[1] === 'connection'
+  })()
   const isDynamicProfileRoute = (() => {
     const path = location.pathname
     if (!path.startsWith('/') || path === '/') return false
     const segments = path.split('/').filter(Boolean)
     return segments.length === 1 && !['login', 'auth', 'welcome', 'forgot-password', 'reset-password', 'search', 'connections', 'profile', 'home', 'admin'].includes(segments[0])
   })()
-  const showHeader = !noHeaderRoutes.includes(location.pathname) && !isDynamicProfileRoute
+  const showHeader = !noHeaderRoutes.includes(location.pathname) && !isDynamicProfileRoute && !isDynamicConnectionsRoute
   return (
     <>
       {showHeader && <Header />}
@@ -128,6 +134,22 @@ function Layout() {
           </ProtectedRoute>
         } />
         <Route path="/connections" element={
+          <ProtectedRoute path="/connections">
+            <Navigate
+              to={(() => {
+                try {
+                  const cached = localStorage.getItem('user')
+                  const username = cached ? JSON.parse(cached)?.username : ''
+                  return username ? `/${username}/connection` : '/profile'
+                } catch {
+                  return '/profile'
+                }
+              })()}
+              replace
+            />
+          </ProtectedRoute>
+        } />
+        <Route path="/:username/connection" element={
           <ProtectedRoute path="/connections">
             <ConnectionsPage />
           </ProtectedRoute>

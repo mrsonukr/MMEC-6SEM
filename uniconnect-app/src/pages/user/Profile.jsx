@@ -354,7 +354,13 @@ export default function Profile() {
                     Student
                   </span>
                   <span>•</span>
-                  <Link to="/connections" className="flex items-center gap-1.5">
+                  <Link
+                    to={(() => {
+                      const targetUsername = routeUsername || user?.username || currentLoggedInUsername
+                      return targetUsername ? `/${targetUsername}/connection` : '/connections'
+                    })()}
+                    className="flex items-center gap-1.5"
+                  >
                     <div className="flex -space-x-1.5">
                       {(user?.connected_dps || []).slice(0, 4).map((src, i) => (
                         <img
