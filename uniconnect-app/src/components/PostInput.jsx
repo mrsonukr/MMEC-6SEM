@@ -3,7 +3,17 @@ import { MoreHorizontal, FileImage, BarChart3, Sparkles, ChevronDown } from "luc
 import { postsAPI } from '../utils/api';
 
 // Default profile image
-const DEFAULT_PROFILE_IMAGE = '/default-avatar.png';
+const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png';
+
+const getProfileImage = (profile) => {
+  return (
+    profile?.profile_picture_url ||
+    profile?.profile_picture ||
+    profile?.avatar_url ||
+    profile?.avatar ||
+    DEFAULT_PROFILE_IMAGE
+  );
+};
 
 const scrollbarHideStyle = {
   scrollbarWidth: 'none',
@@ -165,20 +175,27 @@ export default function PostInput({ externalOpen, onModalClose, userProfile, onP
     }
   };
 
+  const displayUsername = userProfile?.username
+    ? `${userProfile.username}`
+    : localStorage.getItem('selectedUser')
+      ? `${localStorage.getItem('selectedUser')}`
+      : userProfile?.full_name || 'Loading...';
+
   return (
     <>
       <div className="border-b border-gray-300 -mx-4 px-4 pb-4 mb-4">
         <div className="flex items-center gap-1">
           {/* Profile Picture with Skeleton */}
-          {userProfile?.profile_picture_url ? (
+          {getProfileImage(userProfile) ? (
             <img
               className="w-10 h-10 rounded-full"
-              src={userProfile.profile_picture_url}
+              src={getProfileImage(userProfile)}
               alt="profile"
+              onError={(e) => {
+                e.currentTarget.src = DEFAULT_PROFILE_IMAGE;
+              }}
             />
-          ) : (
-            <div className="w-10 h-10 bg-gray-300 rounded-full animate-pulse"></div>
-          )}
+          ) : null}
           
           <input
             type="text"
@@ -216,17 +233,18 @@ export default function PostInput({ externalOpen, onModalClose, userProfile, onP
                   <div className="p-6">
                     <div className="flex items-center gap-3 mb-4">
                       {/* Profile Picture with Skeleton */}
-                      {userProfile?.profile_picture_url ? (
+                      {getProfileImage(userProfile) ? (
                         <img
                           className="w-10 h-10 rounded-full"
-                          src={userProfile.profile_picture_url}
+                          src={getProfileImage(userProfile)}
                           alt="profile"
+                          onError={(e) => {
+                            e.currentTarget.src = DEFAULT_PROFILE_IMAGE;
+                          }}
                         />
-                      ) : (
-                        <div className="w-10 h-10 bg-gray-300 rounded-full animate-pulse"></div>
-                      )}
+                      ) : null}
                       <div className="flex-1">
-                        <div className="font-semibold">mrsonukr</div>
+                        <div className="font-semibold">{displayUsername}</div>
                       </div>
                       
                       {/* AI Enhancement Button */}

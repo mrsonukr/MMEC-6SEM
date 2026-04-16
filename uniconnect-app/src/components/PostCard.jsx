@@ -7,12 +7,20 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-const DEFAULT_PROFILE_IMAGE = '/default-avatar.png';
+const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png';
+
+const getAuthorInfo = (post) => {
+  const author = typeof post.author === 'object' ? post.author : null;
+  const username = author?.username || post.username || post.author_username || '';
+
+  return {
+    username,
+    displayUsername: username || 'unknown'
+  };
+};
 
 // Image Skeleton Component with aspect ratio
 const ImageSkeleton = ({ width, height, className = "" }) => {
-  const aspectRatio = width && height ? height / width : 0.5625; // Default 16:9
-  
   return (
     <div 
       className={`bg-gray-200 animate-pulse rounded-lg ${className}`}
@@ -32,6 +40,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [loadedImages, setLoadedImages] = useState({});
   const dropdownRef = useRef(null);
+  const authorInfo = getAuthorInfo(post);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -143,58 +152,68 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
 
   return (
     <div>
-      <div className="flex items-start gap-3 mb-3">
-        <img
-          className="w-10 h-10 rounded-full"
-          src={post.profileImage}
-          alt="profile"
-        />
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="font-semibold text-gray-900">{typeof post.author === 'object' ? post.author?.full_name : post.author}</h3>
-              <p className="text-xs text-gray-500">@{typeof post.author === 'object' ? post.author?.username : 'unknown'}</p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500 text-sm">{post.time}</span>
-
-              {/* Three dots menu */}
-              <div className="relative" ref={dropdownRef}>
-              <button
-                className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                onClick={() => setShowPostDropdown(!showPostDropdown)}
-              >
-                <MoreHorizontal className="w-4 h-4 text-gray-600" />
-              </button>
-              
-              {/* Dropdown menu */}
-              {showPostDropdown && (
-                <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
-                  {postMenuItems.map((item, index) => (
-                    <button
-                      key={index}
-                      className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-50 transition-colors ${
-                        item.danger ? 'text-red-600 hover:bg-red-50' : 'text-gray-700'
-                      }`}
-                      onClick={() => {
-                        item.onClick();
-                        setShowPostDropdown(false);
-                      }}
-                    >
-                      {item.icon}
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-              </div>
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <img
+            className="w-10 h-10 rounded-full flex-shrink-0"
+            src={post.profileImage}
+            alt="profile"
+          />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-gray-900 text-base leading-none">
+                {authorInfo.displayUsername}
+              </h3>
+              {post.level ? (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200 leading-none">
+                  {post.level}
+                </span>
+              ) : null}
             </div>
           </div>
+        </div>
 
-          <p className="text-gray-800 mt-1">
-            {post.content}
-          </p>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-gray-500 text-sm leading-none">{post.time}</span>
+
+          {/* Three dots menu */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+              onClick={() => setShowPostDropdown(!showPostDropdown)}
+            >
+              <MoreHorizontal className="w-4 h-4 text-gray-600" />
+            </button>
+
+            {/* Dropdown menu */}
+            {showPostDropdown && (
+              <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                {postMenuItems.map((item, index) => (
+                  <button
+                    key={index}
+                    className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-50 transition-colors ${
+                      item.danger ? 'text-red-600 hover:bg-red-50' : 'text-gray-700'
+                    }`}
+                    onClick={() => {
+                      item.onClick();
+                      setShowPostDropdown(false);
+                    }}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
+
+      <div className="pl-[52px]">
+        <p className="text-gray-800 mt-1">
+          {post.content}
+        </p>
 
           {/* Handle media display based on media_urls and media_type */}
           {post.media_urls && post.media_urls.length > 0 && (
@@ -268,7 +287,6 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
               />
             </div>
           )}
-        </div>
       </div>
       
       <div className="flex items-center gap-1 mt-4 text-gray-500 ml-14 select-none">
@@ -367,7 +385,14 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
                     }}
                   />
                   <div>
-                    <h3 className="font-semibold text-sm">{post.author?.full_name || post.author?.username}</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-sm text-gray-900">{authorInfo.displayUsername}</h3>
+                      {post.level ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200">
+                          {post.level}
+                        </span>
+                      ) : null}
+                    </div>
                     <span className="text-gray-500 text-xs">{post.created_at}</span>
                   </div>
                 </div>

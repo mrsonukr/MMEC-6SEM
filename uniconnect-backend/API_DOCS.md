@@ -84,6 +84,26 @@ Base URL (production): `https://backend.uniconnectmmu.workers.dev`
 
 ---
 
+### Get User Profile By Username (Read Only)
+**GET** `/users/profile/:username`
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "user": {
+    "id": 7,
+    "full_name": "Sonu Kumar",
+    "username": "mrsonukr",
+    "role": "student",
+    "profile_picture_url": "https://.../profile.jpg",
+    "bio": "...",
+    "connected_count": 5,
+    "connected_dps": ["https://.../a.jpg", "https://.../b.jpg", "https://.../c.jpg"]
+  }
+}
+```
+
 ### Update User
 **PUT** `/users/:id`
 
@@ -119,6 +139,107 @@ Base URL (production): `https://backend.uniconnectmmu.workers.dev`
 ```
 
 ---
+
+### Search People
+**GET** `/users/search?q=<text>&limit=20`
+
+Searches by `username` and `full_name` (case-insensitive).
+Requires header `Authorization: Bearer <access_token>`.
+Only returns users whose `username` is set.
+If a user's `dp` / `profile_picture_url` is missing, the API returns a default image URL instead of `null`.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "results": [
+    {
+      "name": "Rahul Sharma",
+      "username": "rahulsharma",
+      "dp": "https://.../profile.jpg",
+      "isConnected": true,
+      "show_btn": false
+    }
+  ]
+}
+```
+
+**Response `400`:**
+```json
+{
+  "success": false,
+  "message": "Missing query param: q"
+}
+```
+
+---
+
+## Connections
+
+### List My Connections (Pagination + Search)
+**GET** `/connections?limit=20&offset=0&q=<text>`
+
+Requires header `Authorization: Bearer <access_token>`.
+
+Returns only mutual connections. Search (`q`) matches `username` and `full_name` (case-insensitive).
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "total": 12,
+  "limit": 20,
+  "offset": 0,
+  "next_offset": null,
+  "has_more": false,
+  "results": [
+    {
+      "id": 8,
+      "name": "Rahul Sharma",
+      "username": "rahulsharma",
+      "dp": "https://.../profile.jpg"
+    }
+  ]
+}
+```
+
+### Connect (Follow)
+**POST** `/connections/:username`
+
+Requires header `Authorization: Bearer <access_token>`.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Connected."
+}
+```
+
+### Disconnect (Unfollow)
+**DELETE** `/connections/:username`
+
+Requires header `Authorization: Bearer <access_token>`.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "message": "Disconnected."
+}
+```
+
+### Count Connections
+**GET** `/connections/count?username=<username>`
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "username": "rahulsharma",
+  "connected": 5
+}
+```
 
 ## Auth
 
@@ -162,6 +283,37 @@ Verifies the Google ID token. If the email exists in `users`, logs in. Otherwise
 {
   "success": false,
   "message": "Invalid Google token"
+}
+```
+
+---
+
+### Get My Profile
+**GET** `/auth/profile`
+
+**Headers:**
+```
+Authorization: Bearer <session_id>
+```
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "user": {
+    "id": 7,
+    "full_name": "Sonu Kumar",
+    "username": "mrsonukr",
+    "role": "student",
+    "profile_picture_url": "https://.../profile.jpg",
+    "bio": "....",
+    "connected_count": 5,
+    "connected_dps": [
+      "https://.../a.jpg",
+      "https://.../b.jpg",
+      "https://.../c.jpg"
+    ]
+  }
 }
 ```
 
@@ -268,6 +420,7 @@ Authorization: Bearer <session_id>
 ```
 
 > `username` must be 3-20 characters, lowercase letters a-z, numbers 0-9, underscore _, and dot .
+> Reserved usernames are treated as taken: `admin`, `login`, `auth`, `forgotpassword`, `resetpassword`, `welcome`, `home`, `profile`, `search`, `connections`.
 
 **Response `200`:**
 ```json

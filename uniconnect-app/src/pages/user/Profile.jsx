@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import Sidebar from '../../components/Sidebar'
 import PostInput from '../../components/PostInput'
 import PostCard from '../../components/PostCard'
@@ -8,7 +9,7 @@ import { MapPin, Briefcase, GraduationCap, Plus, Edit3, ExternalLink, Award, Use
 import { usernameAPI, postsAPI } from '../../utils/api'
 
 // Default profile image
-const DEFAULT_PROFILE_IMAGE = '/default-avatar.png'
+const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png'
 
 // Tab state
 const TABS = ['Posts', 'Skills', 'Educations']
@@ -65,30 +66,45 @@ const PostSkeleton = () => (
 
 const skills = ['React', 'Node.js', 'MongoDB', 'UI Design', 'Figma', 'TypeScript', 'Next.js']
 
-const connections = [
-  'https://randomuser.me/api/portraits/men/32.jpg',
-  'https://randomuser.me/api/portraits/women/44.jpg',
-  'https://randomuser.me/api/portraits/men/12.jpg',
-  'https://randomuser.me/api/portraits/women/28.jpg',
-]
-
 const normalizeProfileUser = (payload) => {
   const rawUser = payload?.user || payload?.data?.user || payload?.data || null
   if (!rawUser) return null
 
   return {
     ...rawUser,
-    bio: rawUser.bio || rawUser.desc || rawUser.description || rawUser.about || ''
+    profile_picture_url: rawUser.profile_picture_url || rawUser.profile_picture || rawUser.avatar_url || rawUser.avatar || '',
+    bio: rawUser.bio || rawUser.desc || rawUser.description || rawUser.about || '',
+    connected_count: rawUser.connected_count ?? rawUser.connectedCount ?? 0,
+    connected_dps: Array.isArray(rawUser.connected_dps) ? rawUser.connected_dps : (Array.isArray(rawUser.connectedDps) ? rawUser.connectedDps : [])
   }
 }
 
 export default function Profile() {
+  const { username: routeUsername } = useParams()
+  const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [posts, setPosts] = useState([])
   const [postsLoading, setPostsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('Posts')
   const [showDropdown, setShowDropdown] = useState(false)
+  const currentLoggedInUsername = (() => {
+    try {
+      const cached = localStorage.getItem('user')
+      if (!cached) return ''
+      return JSON.parse(cached)?.username || ''
+    } catch {
+      return ''
+    }
+  })()
+  const isOwnProfile = !routeUsername || routeUsername === currentLoggedInUsername
+
+  // Canonicalize `/profile` to `/:username` once we know the signed-in username.
+  useEffect(() => {
+    if (routeUsername) return
+    if (!user?.username) return
+    navigate(`/${user.username}`, { replace: true })
+  }, [navigate, routeUsername, user?.username])
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -96,34 +112,38 @@ export default function Profile() {
       const cachedUser = localStorage.getItem('user');
       const cacheTimestamp = localStorage.getItem('userCacheTimestamp');
       const now = Date.now();
-      
-      // Clear cache if it's older than 5 minutes or on page refresh
-      if (cachedUser && cacheTimestamp) {
-        const cacheAge = now - parseInt(cacheTimestamp);
-        if (cacheAge < 30 * 1000) { // 30 seconds
-          try {
-            const parsedUser = JSON.parse(cachedUser);
-            const normalizedCachedUser = normalizeProfileUser({ user: parsedUser })
-            setUser(normalizedCachedUser);
-            setLoading(false);
-            return; // Use cache if it's fresh
-          } catch (error) {
-            console.error('Error parsing cached user data:', error);
+
+      try {
+        const currentUser = cachedUser ? normalizeProfileUser({ user: JSON.parse(cachedUser) }) : null
+
+        // Only use the short-lived cache for the signed-in user's own profile.
+        if (!routeUsername && cachedUser && cacheTimestamp) {
+          const cacheAge = now - parseInt(cacheTimestamp)
+          if (cacheAge < 30 * 1000) {
+            setUser(currentUser)
+            setLoading(false)
+            return
           }
         }
-      }
 
-      // Fetch fresh data if no cache or cache is expired
-      try {
-        const response = await usernameAPI.getUserProfile()
-        if (response.success) {
-          const normalizedUser = normalizeProfileUser(response)
-          setUser(normalizedUser)
-          // Cache the user data with timestamp
-          localStorage.setItem('user', JSON.stringify(normalizedUser))
-          localStorage.setItem('userCacheTimestamp', now.toString())
+        if (!routeUsername || currentUser?.username === routeUsername) {
+          const response = await usernameAPI.getUserProfile()
+          if (response.success) {
+            const normalizedUser = normalizeProfileUser(response)
+            setUser(normalizedUser)
+            // Cache the user data with timestamp
+            localStorage.setItem('user', JSON.stringify(normalizedUser))
+            localStorage.setItem('userCacheTimestamp', now.toString())
+          } else {
+            console.error('Failed to load profile:', response.message)
+          }
         } else {
-          console.error('Failed to load profile:', response.message)
+          const response = await usernameAPI.getUserProfileByUsername(routeUsername)
+          if (response.success) {
+            setUser(normalizeProfileUser(response))
+          } else {
+            console.error('Failed to load profile:', response.message)
+          }
         }
       } catch (error) {
         console.error('Error fetching profile:', error)
@@ -133,7 +153,7 @@ export default function Profile() {
     }
 
     fetchUserProfile()
-  }, [])
+  }, [routeUsername])
 
   // Fetch user posts when user data is available
   useEffect(() => {
@@ -260,32 +280,45 @@ export default function Profile() {
                 <div className="absolute inset-0 opacity-10"
                   style={{ backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 30px, rgba(255,255,255,0.4) 30px, rgba(255,255,255,0.4) 31px)` }}
                 />
-                <div className="absolute top-3 right-3">
-                  <button 
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
-                    onClick={() => setShowDropdown(!showDropdown)}
-                  >
-                    <MoreHorizontal className="w-5 h-5 text-white group-hover:text-black" />
-                  </button>
-                </div>
+                {isOwnProfile && (
+                  <div className="absolute top-3 right-3">
+                    <button 
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
+                      onClick={() => setShowDropdown(!showDropdown)}
+                    >
+                      <MoreHorizontal className="w-5 h-5 text-white group-hover:text-black" />
+                    </button>
+                  </div>
+                )}
               </div>
               
-              <DropdownMenu 
-                isOpen={showDropdown} 
-                onClose={() => setShowDropdown(false)}
-                items={dropdownItems}
-              />
+              {isOwnProfile && (
+                <DropdownMenu 
+                  isOpen={showDropdown} 
+                  onClose={() => setShowDropdown(false)}
+                  items={dropdownItems}
+                />
+              )}
 
               <div className="px-4 pb-5">
                 <div className="flex items-end justify-between -mt-10 mb-4">
                   <div className="relative">
                     {loading ? (
                       <ProfilePictureSkeleton />
-                    ) : (
+                    ) : isOwnProfile ? (
                       <ProfilePictureUpload 
                         currentImage={user?.profile_picture_url || DEFAULT_PROFILE_IMAGE}
                         onUploadSuccess={handleProfilePictureUpload}
                         userId={user?.id}
+                      />
+                    ) : (
+                      <img
+                        src={user?.profile_picture_url || DEFAULT_PROFILE_IMAGE}
+                        alt="profile"
+                        className="w-20 h-20 rounded-full object-cover ring-4 ring-white"
+                        onError={(e) => {
+                          e.currentTarget.src = DEFAULT_PROFILE_IMAGE
+                        }}
                       />
                     )}
                   </div>
@@ -321,20 +354,32 @@ export default function Profile() {
                     Student
                   </span>
                   <span>•</span>
-                  <span className="flex items-center gap-1.5">
+                  <Link to="/connections" className="flex items-center gap-1.5">
                     <div className="flex -space-x-1.5">
-                      {connections.map((src, i) => (
-                        <img key={i} src={src} className="w-4 h-4 rounded-full border border-white" />
+                      {(user?.connected_dps || []).slice(0, 4).map((src, i) => (
+                        <img
+                          key={`${src || 'default'}-${i}`}
+                          src={src || DEFAULT_PROFILE_IMAGE}
+                          alt="connection"
+                          className="w-4 h-4 rounded-full border border-white object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = DEFAULT_PROFILE_IMAGE
+                          }}
+                        />
                       ))}
                     </div>
-                    <span className="text-black font-medium cursor-pointer hover:underline">60 connections</span>
-                  </span>
+                    <span className="text-black font-medium cursor-pointer hover:underline">
+                      {user?.connected_count ?? 0} connections
+                    </span>
+                  </Link>
                 </div>
 
                 
-                <button className="w-full bg-white hover:bg-gray-50 text-black text-sm font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition-colors mt-4 border border-gray-300">
-                  <Edit3 size={14} /> Edit Profile
-                </button>
+                {isOwnProfile && (
+                  <button className="w-full bg-white hover:bg-gray-50 text-black text-sm font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition-colors mt-4 border border-gray-300">
+                    <Edit3 size={14} /> Edit Profile
+                  </button>
+                )}
 
                 {/* Tabs */}
                 <div className="mt-6">
@@ -364,7 +409,7 @@ export default function Profile() {
           {activeTab === 'Posts' && (
             <>
               {/* Post Input */}
-              <PostInput userProfile={user} onPostCreated={refreshPosts} />
+              {isOwnProfile && <PostInput userProfile={user} onPostCreated={refreshPosts} />}
 
               {/* Posts */}
               <div className="space-y-4">

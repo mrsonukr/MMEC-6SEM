@@ -3,7 +3,7 @@ import { Camera, X, Check, AlertCircle } from 'lucide-react';
 import { usernameAPI } from '../utils/api';
 
 // Default profile image
-const DEFAULT_PROFILE_IMAGE = '/default-avatar.png';
+const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png';
 
 const ProfilePictureUpload = ({ currentImage, onUploadSuccess }) => {
   const [isUploading, setIsUploading] = useState(false);

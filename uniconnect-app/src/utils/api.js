@@ -93,6 +93,12 @@ export const usernameAPI = {
     });
   },
 
+  getUserProfileByUsername: async (username) => {
+    return apiRequest(`/users/profile/${encodeURIComponent(username)}`, {
+      method: 'GET',
+    });
+  },
+
   updateUserProfile: async (profileData) => {
     return apiRequest('/auth/profile', {
       method: 'PUT',
@@ -161,6 +167,42 @@ export const postsAPI = {
     return apiRequest('/posts/media/upload', {
       method: 'POST',
       body: formData,
+    });
+  },
+};
+
+// Users related API calls
+export const usersAPI = {
+  searchUsers: async (query, limit = 20) => {
+    const q = (query || '').trim();
+    const endpoint = `/users/search?q=${encodeURIComponent(q)}&limit=${limit}`;
+    return apiRequest(endpoint, {
+      method: 'GET',
+    });
+  },
+};
+
+export const connectionsAPI = {
+  getConnections: async ({ limit = 20, offset = 0, q = '' } = {}) => {
+    const params = new URLSearchParams();
+    params.set('limit', String(limit));
+    params.set('offset', String(offset));
+    if (q && q.trim()) params.set('q', q.trim());
+
+    return apiRequest(`/connections?${params.toString()}`, {
+      method: 'GET',
+    });
+  },
+
+  connectUser: async (username) => {
+    return apiRequest(`/connections/${encodeURIComponent(username)}`, {
+      method: 'POST',
+    });
+  },
+
+  disconnectUser: async (username) => {
+    return apiRequest(`/connections/${encodeURIComponent(username)}`, {
+      method: 'DELETE',
     });
   },
 };

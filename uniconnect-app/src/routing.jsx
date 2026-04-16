@@ -10,6 +10,7 @@ import WelcomePage from './pages/WelcomePage'
 import HomePage from './pages/user/HomePage'
 import Profile from './pages/user/Profile'
 import SearchPage from './pages/user/SearchPage'
+import ConnectionsPage from './pages/user/ConnectionsPage'
 
 // Routes that should not be accessible directly without proper context
 const protectedRoutes = {
@@ -42,7 +43,7 @@ const protectedRoutes = {
 const authRoutes = ['/login', '/login-new']
 
 // Routes that require authentication (user directory pages)
-const protectedAuthRoutes = ['/', '/profile', '/search', '/home']
+const protectedAuthRoutes = ['/', '/profile', '/search', '/connections', '/home']
 
 // Check if user is logged in
 const isUserLoggedIn = () => {
@@ -73,11 +74,17 @@ const ProtectedRoute = ({ children, path }) => {
   return children
 }
 
-const noHeaderRoutes = ['/login-new', '/login', '/forgot-password', '/reset-password', '/', '/home', '/profile', '/search', '/welcome', '/auth']
+const noHeaderRoutes = ['/login-new', '/login', '/forgot-password', '/reset-password', '/', '/home', '/profile', '/search', '/connections', '/welcome', '/auth']
 
 function Layout() {
   const location = useLocation()
-  const showHeader = !noHeaderRoutes.includes(location.pathname)
+  const isDynamicProfileRoute = (() => {
+    const path = location.pathname
+    if (!path.startsWith('/') || path === '/') return false
+    const segments = path.split('/').filter(Boolean)
+    return segments.length === 1 && !['login', 'auth', 'welcome', 'forgot-password', 'reset-password', 'search', 'connections', 'profile', 'home', 'admin'].includes(segments[0])
+  })()
+  const showHeader = !noHeaderRoutes.includes(location.pathname) && !isDynamicProfileRoute
   return (
     <>
       {showHeader && <Header />}
@@ -118,6 +125,16 @@ function Layout() {
         <Route path="/search" element={
           <ProtectedRoute path="/search">
             <SearchPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/connections" element={
+          <ProtectedRoute path="/connections">
+            <ConnectionsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/:username" element={
+          <ProtectedRoute path="/profile">
+            <Profile />
           </ProtectedRoute>
         } />
       </Routes>

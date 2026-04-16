@@ -6,7 +6,17 @@ import PostCard from "../../components/PostCard";
 import { usernameAPI } from "../../utils/api";
 
 // Default profile image
-const DEFAULT_PROFILE_IMAGE = '/default-avatar.png';
+const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png';
+
+const normalizeProfileUser = (payload) => {
+  const rawUser = payload?.user || payload?.data?.user || payload?.data || null;
+  if (!rawUser) return null;
+
+  return {
+    ...rawUser,
+    profile_picture_url: rawUser.profile_picture_url || rawUser.profile_picture || rawUser.avatar_url || rawUser.avatar || ''
+  };
+};
 
 export default function HomePage() {
   const [posts, setPosts] = useState([]);
@@ -46,9 +56,9 @@ export default function HomePage() {
     try {
       const response = await usernameAPI.getUserProfile();
       if (response.success) {
-        setUser(response.user);
+        setUser(normalizeProfileUser(response));
         // Cache the user data with timestamp
-        localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage.setItem('user', JSON.stringify(normalizeProfileUser(response)));
         localStorage.setItem('userCacheTimestamp', now.toString());
       }
     } catch (error) {

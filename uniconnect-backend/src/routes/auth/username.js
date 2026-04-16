@@ -1,4 +1,7 @@
-import { validateUsername, generateUsernameSuggestions } from "../../utils/username.js";
+import { validateUsername, generateUsernameSuggestions, isReservedUsername } from "../../utils/username.js";
+
+const DEFAULT_DP_URL =
+  "https://backend.uniconnectmmu.workers.dev/download/users/7/profile/7_1776060489755_GfYvBwN2.webp";
 
 export async function setUsername(request, env) {
   const { username } = await request.json();
@@ -16,6 +19,16 @@ export async function setUsername(request, env) {
       success: false, 
       message: "Username must be 3-20 characters, lowercase letters, numbers, underscores, and dots only." 
     }, { status: 400 });
+  }
+
+  if (isReservedUsername(username)) {
+    return Response.json(
+      {
+        success: false,
+        message: "Username is already taken.",
+      },
+      { status: 409 }
+    );
   }
 
   // Get user from session (you'll need to implement session verification)
@@ -142,6 +155,13 @@ export async function checkUsernameAvailability(request, env) {
     }, { status: 400 });
   }
 
+  if (isReservedUsername(username)) {
+    return Response.json({
+      success: true,
+      available: false
+    });
+  }
+
   // Check if username exists
   const existingUser = await env.DB.prepare(
     `SELECT id FROM users WHERE username = ?`
@@ -188,6 +208,37 @@ export async function getUserProfile(request, env) {
     }, { status: 404 });
   }
 
+  const connectedRow = await env.DB.prepare(
+    `
+      SELECT COUNT(DISTINCT c1.following_id) AS count
+      FROM connections c1
+      JOIN connections c2
+        ON c1.follower_id = c2.following_id
+       AND c1.following_id = c2.follower_id
+      WHERE c1.follower_id = ?
+    `
+  )
+    .bind(user.id)
+    .first();
+
+  const { results: connectedUsers } = await env.DB.prepare(
+    `
+      SELECT u.profile_picture_url
+      FROM connections c1
+      JOIN connections c2
+        ON c1.follower_id = c2.following_id
+       AND c1.following_id = c2.follower_id
+      JOIN users u
+        ON u.id = c1.following_id
+      WHERE c1.follower_id = ?
+      GROUP BY u.id
+      ORDER BY u.full_name ASC
+      LIMIT 3
+    `
+  )
+    .bind(user.id)
+    .all();
+
   return Response.json({
     success: true,
     user: {
@@ -195,8 +246,10 @@ export async function getUserProfile(request, env) {
       full_name: user.full_name,
       username: user.username,
       role: user.role,
-      profile_picture_url: user.profile_picture_url,
-      bio: user.bio
+      profile_picture_url: user.profile_picture_url || DEFAULT_DP_URL,
+      bio: user.bio,
+      connected_count: connectedRow?.count ?? 0,
+      connected_dps: (connectedUsers || []).map((u) => u.profile_picture_url || DEFAULT_DP_URL)
     }
   });
 }

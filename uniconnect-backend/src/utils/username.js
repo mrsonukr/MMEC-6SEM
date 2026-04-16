@@ -20,6 +20,30 @@ export function validateUsername(username) {
   return usernameRegex.test(username);
 }
 
+const RESERVED_USERNAMES = new Set([
+  "admin",
+  "login",
+  "auth",
+  "forgotpassword",
+  "resetpassword",
+  "welcome",
+  "home",
+  "profile",
+  "search",
+  "connections",
+]);
+
+function normalizeUsername(value) {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim().toLowerCase();
+  return trimmed.startsWith("/") ? trimmed.slice(1) : trimmed;
+}
+
+export function isReservedUsername(username) {
+  const normalized = normalizeUsername(username);
+  return RESERVED_USERNAMES.has(normalized);
+}
+
 /**
  * Generates username suggestions based on user's name
  * @param {string} fullName 
@@ -63,6 +87,6 @@ export function generateUsernameSuggestions(fullName) {
 
   // Filter valid usernames and return first 5
   return suggestions
-    .filter(validateUsername)
+    .filter((u) => validateUsername(u) && !isReservedUsername(u))
     .slice(0, 5);
 }

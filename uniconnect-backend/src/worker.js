@@ -6,6 +6,7 @@ import { handleDownload } from "./routes/download/index.js";
 import { handlePosts } from "./routes/posts/index.js";
 import { uploadPostMedia } from "./routes/posts/media.js";
 import { uploadProfilePicture, getProfilePicture } from "./routes/auth/profile-upload.js";
+import { handleConnections } from "./routes/connections/index.js";
 import { 
   handleR2Upload, 
   handleR2Download, 
@@ -50,6 +51,11 @@ export default {
 
       if (url.pathname.startsWith("/users")) {
         const res = await handleUsers(request, env, url, method);
+        if (res) return withCors(res);
+      }
+
+      if (url.pathname.startsWith("/connections")) {
+        const res = await handleConnections(request, env, url, method);
         if (res) return withCors(res);
       }
 
