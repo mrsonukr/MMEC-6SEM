@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Image, Send, Sparkles } from 'lucide-react'
+import { X, Image, Send, Sparkles, MoreHorizontal, FileImage, BarChart3 } from 'lucide-react'
 import { postsAPI } from '../utils/api'
 import Spinner from './Spinner';
 

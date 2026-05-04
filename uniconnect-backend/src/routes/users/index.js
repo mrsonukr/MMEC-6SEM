@@ -1,6 +1,6 @@
 export async function handleUsers(request, env, url, method) {
   const DEFAULT_DP_URL =
-    "https://backend.uniconnectmmu.workers.dev/download/users/7/profile/7_1776060489755_GfYvBwN2.webp";
+    "https://backend.uniconnectmmu.workers.dev/download/users/7/profile/7_1777890781131_YOR4ATDF.jpg";
 
   if (url.pathname.startsWith("/users/profile/") && method === "GET") {
     const authHeader = request.headers.get("Authorization");
@@ -67,6 +67,24 @@ export async function handleUsers(request, env, url, method) {
 
     const isOwner = requestingUserId ? String(requestingUserId) === String(target.id) : false;
 
+    // Check if requesting user is connected to target user
+    let isConnected = false;
+    if (requestingUserId && !isOwner) {
+      const connectionCheck = await env.DB.prepare(
+        `
+          SELECT COUNT(*) as count
+          FROM connections c1
+          JOIN connections c2
+            ON c1.follower_id = c2.following_id
+           AND c1.following_id = c2.follower_id
+          WHERE c1.follower_id = ? AND c1.following_id = ?
+        `
+      )
+        .bind(requestingUserId, target.id)
+        .first();
+      isConnected = (connectionCheck?.count ?? 0) > 0;
+    }
+
     return Response.json({
       success: true,
       user: {
@@ -79,6 +97,7 @@ export async function handleUsers(request, env, url, method) {
         connected_count: connectedRow?.count ?? 0,
         connected_dps: (connectedUsers || []).map((u) => u.profile_picture_url || DEFAULT_DP_URL),
         owner: isOwner,
+        is_connected: isConnected,
       },
     });
   }

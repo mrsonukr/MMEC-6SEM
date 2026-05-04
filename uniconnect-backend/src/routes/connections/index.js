@@ -27,7 +27,7 @@ async function requireSessionUser(request, env) {
 }
 
 const DEFAULT_DP_URL =
-  "https://backend.uniconnectmmu.workers.dev/download/users/7/profile/7_1776060489755_GfYvBwN2.webp";
+  "https://backend.uniconnectmmu.workers.dev/download/users/7/profile/7_1777890781131_YOR4ATDF.jpg";
 
 export async function handleConnections(request, env, url, method) {
   if (!url.pathname.startsWith("/connections")) return null;

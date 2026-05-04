@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import Sidebar from '../../components/Sidebar'
+import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { MapPin, Briefcase, GraduationCap, Plus, Edit3, ExternalLink, Award, Users, MoreHorizontal, UserPlus, UserMinus } from 'lucide-react'
+import { usernameAPI, connectionsAPI, postsAPI, storeUserProfileData } from '../../utils/api'
 import PostInput from '../../components/PostInput'
 import PostCard from '../../components/PostCard'
+import Sidebar from '../../components/Sidebar'
 import DropdownMenu from '../../components/DropdownMenu'
 import ProfilePictureUpload from '../../components/ProfilePictureUpload'
 import Spinner from '../../components/Spinner'
-import { MapPin, Briefcase, GraduationCap, Plus, Edit3, ExternalLink, Award, Users, MoreHorizontal } from 'lucide-react'
-import { usernameAPI, postsAPI, storeUserProfileData } from '../../utils/api'
 
 // Default profile image
 const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png'
@@ -27,7 +27,8 @@ const normalizeProfileUser = (payload) => {
     bio: rawUser.bio || rawUser.desc || rawUser.description || rawUser.about || '',
     connected_count: rawUser.connected_count ?? rawUser.connectedCount ?? 0,
     connected_dps: Array.isArray(rawUser.connected_dps) ? rawUser.connected_dps : (Array.isArray(rawUser.connectedDps) ? rawUser.connectedDps : []),
-    owner: rawUser.owner || false
+    owner: rawUser.owner || false,
+    is_connected: rawUser.is_connected || false
   }
 }
 
@@ -39,6 +40,7 @@ export default function Profile() {
   const [posts, setPosts] = useState([])
   const [postsLoading, setPostsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('Posts')
+  const [isConnected, setIsConnected] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
   const currentLoggedInUsername = (() => {
     try {
@@ -50,6 +52,30 @@ export default function Profile() {
     }
   })()
   const isOwnProfile = user?.owner || !routeUsername || routeUsername === currentLoggedInUsername
+
+  const handleConnect = async () => {
+    if (!user?.username) return;
+    // Optimistic update
+    setIsConnected(true);
+    try {
+      await connectionsAPI.connectUser(user.username);
+    } catch (error) {
+      console.error('Error connecting:', error);
+      setIsConnected(false); // Revert on error
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!user?.username) return;
+    // Optimistic update
+    setIsConnected(false);
+    try {
+      await connectionsAPI.disconnectUser(user.username);
+    } catch (error) {
+      console.error('Error disconnecting:', error);
+      setIsConnected(true); // Revert on error
+    }
+  };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -91,9 +117,14 @@ export default function Profile() {
           // Fetch another user's profile by username
           const response = await usernameAPI.getUserProfileByUsername(routeUsername)
           if (response.success) {
-            setUser(normalizeProfileUser(response))
+            const normalizedUser = normalizeProfileUser(response)
+            setUser(normalizedUser)
+            setIsConnected(normalizedUser.is_connected || false)
           } else {
             console.error('Failed to load profile:', response.message)
+            if (response.message?.includes('not found')) {
+              navigate('/not-found')
+            }
           }
         }
       } catch (error) {
@@ -332,6 +363,27 @@ export default function Profile() {
                       </button>
                     )}
 
+                    {!isOwnProfile && (
+                      <button 
+                        className={`w-full text-sm font-medium py-2 rounded-lg flex items-center justify-center gap-2 transition-colors mt-4 border ${
+                          isConnected 
+                            ? 'bg-white hover:bg-gray-50 text-black border-gray-300' 
+                            : 'bg-black hover:bg-gray-800 text-white border-gray-800'
+                        }`}
+                        onClick={isConnected ? handleDisconnect : handleConnect}
+                      >
+                        {isConnected ? (
+                          <>
+                            <UserMinus size={14} /> Disconnect
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus size={14} /> Connect
+                          </>
+                        )}
+                      </button>
+                    )}
+
                     {/* Tabs */}
                     <div className="mt-6">
                       <div className="flex justify-around">
@@ -375,16 +427,16 @@ export default function Profile() {
                           post_id: post.post_id,
                           author: post.author, // Pass the full author object from backend
                           author_id: post.author?.id,
-                          time: formatDate(post.created_at),
-                          content: post.caption,
+                          time: post.time || formatDate(post.created_at),
+                          caption: post.caption,
                           profileImage: user?.profile_picture_url || DEFAULT_PROFILE_IMAGE,
                           media_urls: post.media_urls,
                           media_type: post.media_type,
                           media_dimensions: post.media_dimensions,
                           is_private: post.is_private,
-                          likes: Math.floor(Math.random() * 50) + 5,
-                          comments: Math.floor(Math.random() * 20) + 1,
-                          shares: Math.floor(Math.random() * 10) + 1
+                          like_count: post.like_count || 0,
+                          comment_count: post.comment_count || 0,
+                          is_liked: post.is_liked || false
                         }} currentUser={user} onDeletePost={handleDeletePost} />
                       ))
                     ) : (

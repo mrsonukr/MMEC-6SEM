@@ -7,6 +7,8 @@ import { handlePosts } from "./routes/posts/index.js";
 import { uploadPostMedia } from "./routes/posts/media.js";
 import { uploadProfilePicture, getProfilePicture } from "./routes/auth/profile-upload.js";
 import { handleConnections } from "./routes/connections/index.js";
+import { handleLikes } from "./routes/likes/index.js";
+import { handleComments } from "./routes/comments/index.js";
 import { 
   handleR2Upload, 
   handleR2Download, 
@@ -56,6 +58,16 @@ export default {
 
       if (url.pathname.startsWith("/connections")) {
         const res = await handleConnections(request, env, url, method);
+        if (res) return withCors(res);
+      }
+
+      if (url.pathname.startsWith("/likes")) {
+        const res = await handleLikes(request, env, url, method);
+        if (res) return withCors(res);
+      }
+
+      if (url.pathname.startsWith("/comments")) {
+        const res = await handleComments(request, env, url, method);
         if (res) return withCors(res);
       }
 

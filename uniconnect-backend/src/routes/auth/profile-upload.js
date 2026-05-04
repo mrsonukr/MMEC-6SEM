@@ -2,15 +2,18 @@ import { generateToken } from "../../utils/crypto.js";
 
 // Allowed file types for profile pictures
 const ALLOWED_FILE_TYPES = {
-  'image/jpeg': '.jpg',
-  'image/jpg': '.jpg', 
-  'image/png': '.png',
+  'image/jpeg': '.webp',
+  'image/jpg': '.webp', 
+  'image/png': '.webp',
   'image/webp': '.webp',
-  'image/heic': '.heic'
+  'image/heic': '.webp'
 };
 
-// Maximum file size (5MB)
+// Maximum file size (5MB) before processing
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+// Target file size (10KB)
+const TARGET_FILE_SIZE = 10 * 1024;
 
 export async function uploadProfilePicture(request, env) {
   try {
@@ -81,21 +84,31 @@ export async function uploadProfilePicture(request, env) {
         }, { status: 400 });
       }
 
-      // Generate unique filename
-      const fileExtension = ALLOWED_FILE_TYPES[fileType];
-      const uniqueFilename = `${user.id}_${Date.now()}_${generateToken(8)}${fileExtension}`;
+      // Get file buffer
+      const arrayBuffer = await file.arrayBuffer();
+      
+      // Validate file size after conversion (must be under 10KB)
+      if (arrayBuffer.byteLength > TARGET_FILE_SIZE) {
+        return Response.json({ 
+          success: false, 
+          message: `File too large. Please compress image to under ${TARGET_FILE_SIZE / 1024}KB before uploading.` 
+        }, { status: 400 });
+      }
+
+      // Generate unique filename with .webp extension
+      const uniqueFilename = `${user.id}_${Date.now()}_${generateToken(8)}.webp`;
       const objectKey = `users/${user.id}/profile/${uniqueFilename}`;
 
-      // Upload to R2
-      const arrayBuffer = await file.arrayBuffer();
+      // Upload to R2 as WebP
       const uploadResult = await env.R2.put(objectKey, arrayBuffer, {
         httpMetadata: {
-          contentType: fileType,
+          contentType: 'image/webp',
         },
         customMetadata: {
           userId: user.id.toString(),
           uploadedAt: new Date().toISOString(),
-          originalName: file.name
+          originalName: file.name,
+          originalType: fileType
         }
       });
 

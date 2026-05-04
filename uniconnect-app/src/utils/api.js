@@ -2,6 +2,65 @@
 
 const API_BASE_URL = 'https://backend.uniconnectmmu.workers.dev';
 
+// Image compression utility - compress image to under 10KB
+export const compressImage = async (file, maxSizeKB = 10) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Calculate dimensions to fit within 800x800 while maintaining aspect ratio
+        const maxDimension = 800;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        let quality = 0.9;
+        let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+        
+        // Reduce quality until file is under maxSizeKB
+        while (compressedDataUrl.length > maxSizeKB * 1024 && quality > 0.1) {
+          quality -= 0.1;
+          compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+        
+        // Convert data URL to blob
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            resolve(compressedFile);
+          } else {
+            reject(new Error('Failed to compress image'));
+          }
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+};
+
 // Get auth token from localStorage
 const getAuthToken = () => {
   return localStorage.getItem('authToken');
@@ -229,6 +288,57 @@ export const postsAPI = {
     return apiRequest('/posts/media/upload', {
       method: 'POST',
       body: formData,
+    });
+  },
+};
+
+// Likes related API calls
+export const likesAPI = {
+  // Like a post
+  likePost: async (postId) => {
+    return apiRequest(`/likes/${postId}`, {
+      method: 'POST',
+    });
+  },
+
+  // Unlike a post
+  unlikePost: async (postId) => {
+    return apiRequest(`/likes/${postId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Get like status and count for a post
+  getLikeStatus: async (postId) => {
+    return apiRequest(`/likes/${postId}`, {
+      method: 'GET',
+    });
+  },
+};
+
+// Comments related API calls
+export const commentsAPI = {
+  // Add comment to a post
+  addComment: async (postId, commentText) => {
+    return apiRequest(`/comments/${postId}`, {
+      method: 'POST',
+      body: JSON.stringify({ comment_text: commentText }),
+    });
+  },
+
+  // Get comments for a post
+  getComments: async (postId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/comments/${postId}?${queryString}` : `/comments/${postId}`;
+    return apiRequest(endpoint, {
+      method: 'GET',
+    });
+  },
+
+  // Delete a comment
+  deleteComment: async (commentId) => {
+    return apiRequest(`/comments/${commentId}`, {
+      method: 'DELETE',
     });
   },
 };

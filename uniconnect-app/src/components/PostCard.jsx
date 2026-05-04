@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Send, ArrowUp, MoreHorizontal, Edit, Trash2, Share2, Eye, EyeOff, MessageSquareOff, Flag, UserMinus } from "lucide-react";
-import { postsAPI } from '../utils/api';
+import { postsAPI, likesAPI, commentsAPI } from '../utils/api';
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
 import Spinner from './Spinner';
@@ -35,8 +35,11 @@ const ImageSkeleton = ({ width, height, className = "" }) => {
 
 export default function PostCard({ post, currentUser, onDeletePost }) {
   const navigate = useNavigate();
-  const [likes, setLikes] = useState(post.likes);
-  const [isLiked, setIsLiked] = useState(false);
+  const [likes, setLikes] = useState(post.like_count || post.likes || 0);
+  const [isLiked, setIsLiked] = useState(post.is_liked || false);
+  const [comments, setComments] = useState([]);
+  const [commentCount, setCommentCount] = useState(post.comment_count || post.comments || 0);
+  const [loadingComments, setLoadingComments] = useState(false);
   const [showCommentModal, setShowCommentModal] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
@@ -50,6 +53,69 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
   const handleNavigateToProfile = () => {
     if (authorInfo.username) {
       navigate(`/${authorInfo.username}`);
+    }
+  };
+
+  const handleLike = async () => {
+  // Optimistic update - update UI immediately
+  const newIsLiked = !isLiked;
+  const newLikes = newIsLiked ? likes + 1 : likes - 1;
+  
+  setIsLiked(newIsLiked);
+  setLikes(newLikes);
+  
+  try {
+    const postId = post.post_id || post.id;
+    if (newIsLiked) {
+      await likesAPI.likePost(postId);
+    } else {
+      await likesAPI.unlikePost(postId);
+    }
+  } catch (error) {
+    // Revert on error
+    console.error('Error toggling like:', error);
+    setIsLiked(!newIsLiked);
+    setLikes(likes);
+  }
+};
+
+  const handleLoadComments = async () => {
+  // Open modal immediately
+  setShowCommentModal(true);
+  
+  // Load comments if not already loaded
+  if (comments.length === 0) {
+    setLoadingComments(true);
+    try {
+      const postId = post.post_id || post.id;
+      console.log('Loading comments for post:', postId);
+      const response = await commentsAPI.getComments(postId);
+      console.log('Comments response:', response);
+      if (response.success && response.data) {
+        setComments(response.data.comments || []);
+        setCommentCount(response.data.pagination?.total || 0);
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error);
+    } finally {
+      setLoadingComments(false);
+    }
+  }
+};
+
+  const handleAddComment = async () => {
+    if (!commentText.trim()) return;
+
+    try {
+      const postId = post.post_id || post.id || post.postId;
+      const response = await commentsAPI.addComment(postId, commentText.trim());
+      if (response.success && response.data) {
+        setComments(prev => [...prev, response.data]);
+        setCommentCount(prev => prev + 1);
+        setCommentText("");
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error);
     }
   };
 
@@ -69,15 +135,6 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showPostDropdown]);
-
-  const handleLike = () => {
-    if (isLiked) {
-      setLikes(likes - 1);
-    } else {
-      setLikes(likes + 1);
-    }
-    setIsLiked(!isLiked);
-  };
 
   const handleCommentClick = () => {
     setSelectedMediaIndex(0);
@@ -314,9 +371,9 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
           />
           <span className="text-sm">{likes}</span>
         </div>
-        <div className="flex items-center gap-2 hover:text-gray-700 hover:bg-[#F5F5F5] cursor-pointer transition-colors px-3 py-1.5 rounded-full" onClick={handleCommentClick}>
+        <div className="flex items-center gap-2 hover:text-gray-700 hover:bg-[#F5F5F5] cursor-pointer transition-colors px-3 py-1.5 rounded-full" onClick={handleLoadComments}>
           <MessageCircle className="w-5 h-5" />
-          <span className="text-sm">{post.comments}</span>
+          <span className="text-sm">{commentCount}</span>
         </div>
         <div className="flex items-center gap-2 hover:text-gray-700 hover:bg-[#F5F5F5] cursor-pointer transition-colors px-3 py-1.5 rounded-full">
           <Send className="w-5 h-5" />
@@ -408,13 +465,14 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
                       >
                         {authorInfo.displayUsername}
                       </h3>
+                      <span className="text-xs text-gray-500">·</span>
+                      <span className="text-xs text-gray-500">{post.time}</span>
                       {post.level ? (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200">
                           {post.level}
                         </span>
                       ) : null}
                     </div>
-                    <span className="text-gray-500 text-xs">{post.created_at}</span>
                   </div>
                 </div>
                 <button
@@ -429,10 +487,50 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
 
               {/* Comments Section */}
               <div className="flex-1 overflow-y-auto p-4">
-                <div className="text-center text-gray-500 py-8">
-                  <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p>No comments yet. Be the first to comment!</p>
-                </div>
+                {loadingComments ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Spinner size="3" />
+                  </div>
+                ) : comments.length > 0 ? (
+                  <div className="space-y-4">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="flex gap-3">
+                        <img
+                          className="w-8 h-8 rounded-full"
+                          src={comment.author?.profile_picture_url || DEFAULT_PROFILE_IMAGE}
+                          alt={comment.author?.username}
+                          onError={(e) => {
+                            e.target.src = DEFAULT_PROFILE_IMAGE;
+                          }}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span 
+                              className="font-semibold text-sm cursor-pointer hover:underline"
+                              onClick={() => {
+                                if (comment.author?.username) {
+                                  navigate(`/${comment.author.username}`);
+                                }
+                              }}
+                            >
+                              {comment.author?.username}
+                            </span>
+                            <span className="text-xs text-gray-500">·</span>
+                            <span className="text-xs text-gray-500">
+                              {comment.time || 'just now'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-800 mt-1">{comment.comment_text}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    <MessageCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p>No comments yet. Be the first to comment!</p>
+                  </div>
+                )}
               </div>
 
               {/* Comment Input */}
@@ -473,6 +571,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
                   <button
                     className="w-10 h-10 bg-black hover:bg-gray-800 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!commentText.trim()}
+                    onClick={handleAddComment}
                   >
                     <ArrowUp className="w-4 h-4" />
                   </button>

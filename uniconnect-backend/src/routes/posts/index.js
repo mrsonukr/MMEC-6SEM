@@ -28,8 +28,13 @@ function serializePost(post) {
     author: {
       id: post.user_id_ref,
       username: post.username,
-      full_name: post.full_name
+      full_name: post.full_name,
+      profile_picture_url: post.profile_picture_url || null
     },
+    like_count: post.like_count || 0,
+    comment_count: post.comment_count || 0,
+    is_liked: !!post.is_liked,
+    time: formatRelativeTime(post.created_at),
     created_at: formatIndianTime(post.created_at),
     updated_at: formatIndianTime(post.updated_at)
   };
@@ -41,6 +46,31 @@ function formatIndianTime(timestamp) {
   // Convert to IST (UTC+5:30)
   const istTime = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
   return istTime.toISOString().replace('T', ' ').replace('Z', '').substring(0, 19);
+}
+
+// Format relative time (e.g., "2m ago", "5h ago")
+function formatRelativeTime(timestamp) {
+  if (!timestamp) return 'just now';
+  
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  const diffWeeks = Math.floor(diffDays / 7);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffDays / 365);
+
+  if (diffSeconds < 60) return 'just now';
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffWeeks < 4) return `${diffWeeks}w ago`;
+  if (diffMonths < 12) return `${diffMonths}mo ago`;
+  return `${diffYears}y ago`;
 }
 
 // Enhanced serialize function for feed with complete author info
@@ -57,6 +87,10 @@ function serializeFeedPost(post) {
       full_name: post.full_name,
       profile_picture_url: post.profile_picture_url || null
     },
+    like_count: post.like_count || 0,
+    comment_count: post.comment_count || 0,
+    is_liked: !!post.is_liked,
+    time: formatRelativeTime(post.created_at),
     created_at: formatIndianTime(post.created_at),
     updated_at: formatIndianTime(post.updated_at)
   };
@@ -247,13 +281,16 @@ export async function handlePosts(request, env, url, method) {
       .first();
     const total = countResult.total;
 
-    // Get posts with author info including profile picture
+    // Get posts with author info including profile picture, like count, comment count, and like status
     const postsQuery = `
       SELECT 
         p.*,
         u.username,
         u.full_name,
-        u.profile_picture_url
+        u.profile_picture_url,
+        (SELECT COUNT(*) FROM likes l WHERE l.post_id_ref = p.id) as like_count,
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id_ref = p.id) as comment_count,
+        (SELECT COUNT(*) FROM likes l WHERE l.post_id_ref = p.id AND l.user_id_ref = ?) as is_liked
       FROM posts p
       JOIN users u ON p.user_id_ref = u.id
       WHERE p.deleted_at IS NULL 
@@ -264,7 +301,7 @@ export async function handlePosts(request, env, url, method) {
     `;
     
     const postsResult = await env.DB.prepare(postsQuery)
-      .bind(...allUserIds, limit, offset)
+      .bind(currentUser ? currentUser.id : 0, ...allUserIds, limit, offset)
       .all();
     const posts = postsResult.results || [];
 
@@ -344,7 +381,14 @@ export async function handlePosts(request, env, url, method) {
 
     // Get posts with pagination
     const postsQuery = `
-      SELECT p.*, u.username, u.full_name
+      SELECT 
+        p.*,
+        u.username,
+        u.full_name,
+        u.profile_picture_url,
+        (SELECT COUNT(*) FROM likes l WHERE l.post_id_ref = p.id) as like_count,
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id_ref = p.id) as comment_count,
+        (SELECT COUNT(*) FROM likes l WHERE l.post_id_ref = p.id AND l.user_id_ref = ?) as is_liked
       FROM posts p
       JOIN users u ON p.user_id_ref = u.id
       ${whereClause}
@@ -353,7 +397,7 @@ export async function handlePosts(request, env, url, method) {
     `;
     
     const postsResult = await env.DB.prepare(postsQuery)
-      .bind(...params, limit, offset)
+      .bind(currentUser ? currentUser.id : 0, ...params, limit, offset)
       .all();
     const posts = postsResult.results || [];
 

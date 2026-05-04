@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Camera, X, Check, AlertCircle } from 'lucide-react';
-import { usernameAPI } from '../utils/api';
+import { usernameAPI, compressImage } from '../utils/api';
 import Spinner from './Spinner';
 
 // Default profile image
@@ -12,9 +12,6 @@ const ProfilePictureUpload = ({ currentImage, onUploadSuccess }) => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
-
-  // Debug: Log the current image URL
-  console.log('ProfilePictureUpload currentImage:', currentImage);
 
   // Allowed file types and size
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic'];
@@ -47,7 +44,11 @@ const ProfilePictureUpload = ({ currentImage, onUploadSuccess }) => {
     setUploadError('');
 
     try {
-      const response = await usernameAPI.uploadProfilePicture(file);
+      // Compress image to under 10KB before uploading
+      const compressedFile = await compressImage(file, 10);
+      console.log(`Original size: ${(file.size / 1024).toFixed(2)}KB, Compressed size: ${(compressedFile.size / 1024).toFixed(2)}KB`);
+      
+      const response = await usernameAPI.uploadProfilePicture(compressedFile);
 
       if (response.success) {
         setUploadSuccess(true);
