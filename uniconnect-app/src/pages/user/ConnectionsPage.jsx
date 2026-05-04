@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import Sidebar from '../../components/Sidebar'
 import { Link } from 'react-router-dom'
 import { Search, X, Users, Loader2 } from 'lucide-react'
@@ -8,6 +9,7 @@ const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png'
 const PAGE_LIMIT = 20
 
 export default function ConnectionsPage() {
+  const { username: routeUsername } = useParams()
   const [searchQuery, setSearchQuery] = useState('')
   const [connections, setConnections] = useState([])
   const [totalConnections, setTotalConnections] = useState(0)
@@ -30,6 +32,7 @@ export default function ConnectionsPage() {
         limit: PAGE_LIMIT,
         offset: nextOffsetValue,
         q: searchQuery,
+        username: routeUsername,
       })
 
       if (response.success) {
@@ -107,31 +110,39 @@ export default function ConnectionsPage() {
         </div>
 
         <div className="flex-1 p-4 bg-white border border-gray-300 rounded-t-3xl w-full max-w-2xl mx-auto overflow-y-auto pointer-events-auto no-scrollbar">
-          <div className="mb-6">
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search connections"
-                className="w-full pl-12 pr-10 py-2 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none"
-              />
-              {searchQuery && (
-                <button
-                  onClick={handleClear}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-          </div>
+          {!error || !routeUsername || !error.toLowerCase().includes('not found') ? (
+            <>
+              <div className="mb-6">
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search connections"
+                    className="w-full pl-12 pr-10 py-2 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={handleClear}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : null}
 
           {loading ? (
             <div className="flex items-center justify-center py-12 text-gray-500 gap-2">
               <Loader2 className="w-5 h-5 animate-spin" />
               Loading...
+            </div>
+          ) : error && routeUsername && error.toLowerCase().includes('not found') ? (
+            <div className="text-center py-12 text-gray-600">
+              Sorry, this page isn't available.
             </div>
           ) : error ? (
             <div className="text-center py-12 text-red-500">
@@ -141,7 +152,9 @@ export default function ConnectionsPage() {
             <div className="text-center py-12 text-gray-500">
               {searchQuery.trim()
                 ? `No connections found for "${searchQuery.trim()}"`
-                : 'No connections yet.'}
+                : routeUsername
+                  ? `No connections found for "${routeUsername}"`
+                  : 'No connections yet.'}
             </div>
           ) : (
             <>

@@ -88,7 +88,7 @@ export const usernameAPI = {
     });
   },
   getUserProfile: async () => {
-    return apiRequest('/auth/profile', {
+    return apiRequest('/users/profile/', {
       method: 'GET',
     });
   },
@@ -189,11 +189,12 @@ export const usersAPI = {
 };
 
 export const connectionsAPI = {
-  getConnections: async ({ limit = 20, offset = 0, q = '' } = {}) => {
+  getConnections: async ({ limit = 20, offset = 0, q = '', username = '' } = {}) => {
     const params = new URLSearchParams();
     params.set('limit', String(limit));
     params.set('offset', String(offset));
     if (q && q.trim()) params.set('q', q.trim());
+    if (username && username.trim()) params.set('username', username.trim());
 
     return apiRequest(`/connections?${params.toString()}`, {
       method: 'GET',

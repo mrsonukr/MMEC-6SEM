@@ -38,27 +38,38 @@ export async function handleConnections(request, env, url, method) {
     if (error) return error;
 
     const q = (url.searchParams.get("q") || "").trim();
+    const usernameParam = (url.searchParams.get("username") || "").trim();
     const limitParam = Number.parseInt(url.searchParams.get("limit") || "20", 10);
     const offsetParam = Number.parseInt(url.searchParams.get("offset") || "0", 10);
     const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 50) : 20;
     const offset = Number.isFinite(offsetParam) ? Math.max(offsetParam, 0) : 0;
+
+    // If username parameter is provided, show that user's connections instead of current user's
+    let targetUserId = me.id;
+    if (usernameParam) {
+      const targetUser = await env.DB.prepare(`SELECT id FROM users WHERE username = ?`).bind(usernameParam).first();
+      if (!targetUser) {
+        return Response.json({ success: false, message: "User not found." }, { status: 404 });
+      }
+      targetUserId = targetUser.id;
+    }
 
     const term = q ? `%${q.toLowerCase()}%` : null;
 
     const totalRow = await env.DB.prepare(
       `
         SELECT COUNT(DISTINCT u.id) as count
-        FROM connections c1
-        JOIN connections c2
-          ON c1.follower_id = c2.following_id
-         AND c1.following_id = c2.follower_id
-        JOIN users u
-          ON u.id = c1.following_id
-        WHERE c1.follower_id = ?
-          AND (? IS NULL OR lower(u.username) LIKE ? OR lower(u.full_name) LIKE ?)
+            FROM connections c1
+            JOIN connections c2
+              ON c1.follower_id = c2.following_id
+             AND c1.following_id = c2.follower_id
+            JOIN users u
+              ON u.id = c1.following_id
+            WHERE c1.follower_id = ?
+              AND (? IS NULL OR lower(u.username) LIKE ? OR lower(u.full_name) LIKE ?)
       `
     )
-      .bind(me.id, term, term, term)
+      .bind(targetUserId, term, term, term)
       .first();
     const total = totalRow?.count ?? 0;
 
@@ -78,7 +89,7 @@ export async function handleConnections(request, env, url, method) {
         LIMIT ? OFFSET ?
       `
     )
-      .bind(me.id, term, term, term, limit, offset)
+      .bind(targetUserId, term, term, term, limit, offset)
       .all();
 
     const next_offset = offset + (results || []).length;

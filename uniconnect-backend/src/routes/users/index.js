@@ -3,6 +3,22 @@ export async function handleUsers(request, env, url, method) {
     "https://backend.uniconnectmmu.workers.dev/download/users/7/profile/7_1776060489755_GfYvBwN2.webp";
 
   if (url.pathname.startsWith("/users/profile/") && method === "GET") {
+    const authHeader = request.headers.get("Authorization");
+    let requestingUserId = null;
+    
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const session_id = authHeader.substring(7);
+      const session = await env.DB.prepare(
+        `SELECT user_id FROM sessions WHERE session_id = ? AND is_active = 1 AND expires_at > CURRENT_TIMESTAMP`
+      )
+        .bind(session_id)
+        .first();
+      
+      if (session) {
+        requestingUserId = session.user_id;
+      }
+    }
+
     const username = decodeURIComponent(url.pathname.split("/")[3] || "").trim();
     if (!username) {
       return Response.json({ success: false, message: "Username is required." }, { status: 400 });
@@ -49,6 +65,8 @@ export async function handleUsers(request, env, url, method) {
       .bind(target.id)
       .all();
 
+    const isOwner = requestingUserId ? String(requestingUserId) === String(target.id) : false;
+
     return Response.json({
       success: true,
       user: {
@@ -60,6 +78,7 @@ export async function handleUsers(request, env, url, method) {
         bio: target.bio,
         connected_count: connectedRow?.count ?? 0,
         connected_dps: (connectedUsers || []).map((u) => u.profile_picture_url || DEFAULT_DP_URL),
+        owner: isOwner,
       },
     });
   }
