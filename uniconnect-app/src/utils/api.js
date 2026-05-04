@@ -162,6 +162,15 @@ export const usernameAPI = {
 
 // Posts related API calls
 export const postsAPI = {
+  // Get feed (Instagram-like feed from mutual connections)
+  getFeed: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/feed?${queryString}` : '/feed';
+    return apiRequest(endpoint, {
+      method: 'GET',
+    });
+  },
+
   // Create a new post
   createPost: async (postData) => {
     return apiRequest('/posts', {

@@ -69,6 +69,11 @@ export default {
         if (res) return withCors(res);
       }
 
+      if (url.pathname === "/feed" && method === "GET") {
+        const res = await handlePosts(request, env, url, method);
+        if (res) return withCors(res);
+      }
+
       if (url.pathname === "/posts/media/upload" && method === "POST") {
         const res = await uploadPostMedia(request, env);
         return withCors(res);

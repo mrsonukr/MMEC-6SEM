@@ -43,6 +43,25 @@ function formatIndianTime(timestamp) {
   return istTime.toISOString().replace('T', ' ').replace('Z', '').substring(0, 19);
 }
 
+// Enhanced serialize function for feed with complete author info
+function serializeFeedPost(post) {
+  return {
+    post_id: post.post_id,
+    caption: post.caption,
+    media_type: normalizeMediaType(post.media_type),
+    media_urls: post.media_urls ? JSON.parse(post.media_urls) : [],
+    is_private: !!post.is_private,
+    author: {
+      id: post.user_id_ref,
+      username: post.username,
+      full_name: post.full_name,
+      profile_picture_url: post.profile_picture_url || null
+    },
+    created_at: formatIndianTime(post.created_at),
+    updated_at: formatIndianTime(post.updated_at)
+  };
+}
+
 export async function handlePosts(request, env, url, method) {
   // Get user from session for authentication
   const authHeader = request.headers.get('Authorization');
@@ -161,6 +180,109 @@ export async function handlePosts(request, env, url, method) {
       message: "Post created successfully.",
       data: serializePost(post)
     }, { status: 201 });
+  }
+
+  // GET feed (Instagram-like feed from mutual connections)
+  if (url.pathname === "/feed" && method === "GET") {
+    if (!currentUser) {
+      return Response.json({ 
+        success: false, 
+        message: "Authentication required." 
+      }, { status: 401 });
+    }
+
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const limit = parseInt(url.searchParams.get('limit')) || 10;
+    const offset = (page - 1) * limit;
+
+    // Get mutual connections (users who follow each other)
+    const mutualConnectionsQuery = `
+      SELECT DISTINCT c1.following_id as user_id
+      FROM connections c1
+      JOIN connections c2
+        ON c1.follower_id = c2.following_id
+       AND c1.following_id = c2.follower_id
+      WHERE c1.follower_id = ?
+    `;
+    
+    const mutualConnections = await env.DB.prepare(mutualConnectionsQuery)
+      .bind(currentUser.id)
+      .all();
+    
+    const mutualConnectionIds = (mutualConnections.results || []).map(c => c.user_id);
+    
+    // Only show posts from mutual connections, not own posts
+    const allUserIds = mutualConnectionIds;
+    
+    // If no connections and no own posts, return empty feed
+    if (allUserIds.length === 0) {
+      return Response.json({
+        success: true,
+        data: {
+          posts: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            has_next: false
+          }
+        }
+      });
+    }
+
+    // Build placeholders for IN clause
+    const placeholders = allUserIds.map(() => '?').join(',');
+    
+    // Get total count of posts from mutual connections and own posts
+    const countQuery = `
+      SELECT COUNT(*) as total 
+      FROM posts p 
+      WHERE p.deleted_at IS NULL 
+        AND p.is_private = 0
+        AND p.user_id_ref IN (${placeholders})
+    `;
+    
+    const countResult = await env.DB.prepare(countQuery)
+      .bind(...allUserIds)
+      .first();
+    const total = countResult.total;
+
+    // Get posts with author info including profile picture
+    const postsQuery = `
+      SELECT 
+        p.*,
+        u.username,
+        u.full_name,
+        u.profile_picture_url
+      FROM posts p
+      JOIN users u ON p.user_id_ref = u.id
+      WHERE p.deleted_at IS NULL 
+        AND p.is_private = 0
+        AND p.user_id_ref IN (${placeholders})
+      ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+    
+    const postsResult = await env.DB.prepare(postsQuery)
+      .bind(...allUserIds, limit, offset)
+      .all();
+    const posts = postsResult.results || [];
+
+    // Format posts for response
+    const formattedPosts = posts.map((post) => serializeFeedPost(post));
+
+    return Response.json({
+      success: true,
+      data: {
+        posts: formattedPosts,
+        pagination: {
+          page,
+          limit,
+          total,
+          has_next: offset + limit < total
+        }
+      }
+    });
   }
 
   // GET all posts

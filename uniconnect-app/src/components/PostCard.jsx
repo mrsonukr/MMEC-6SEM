@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, Send, ArrowUp, MoreHorizontal, Edit, Trash2, Share2, Eye, EyeOff, MessageSquareOff, Flag, UserMinus } from "lucide-react";
 import { postsAPI } from '../utils/api';
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -13,10 +14,12 @@ const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png';
 const getAuthorInfo = (post) => {
   const author = typeof post.author === 'object' ? post.author : null;
   const username = author?.username || post.username || post.author_username || '';
+  const profilePictureUrl = author?.profile_picture_url || post.profileImage || DEFAULT_PROFILE_IMAGE;
 
   return {
     username,
-    displayUsername: username || 'unknown'
+    displayUsername: username || 'unknown',
+    profilePictureUrl
   };
 };
 
@@ -31,6 +34,7 @@ const ImageSkeleton = ({ width, height, className = "" }) => {
 };
 
 export default function PostCard({ post, currentUser, onDeletePost }) {
+  const navigate = useNavigate();
   const [likes, setLikes] = useState(post.likes);
   const [isLiked, setIsLiked] = useState(false);
   const [showCommentModal, setShowCommentModal] = useState(false);
@@ -42,6 +46,12 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
   const [loadedImages, setLoadedImages] = useState({});
   const dropdownRef = useRef(null);
   const authorInfo = getAuthorInfo(post);
+
+  const handleNavigateToProfile = () => {
+    if (authorInfo.username) {
+      navigate(`/${authorInfo.username}`);
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -156,13 +166,17 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-3 min-w-0">
           <img
-            className="w-10 h-10 rounded-full flex-shrink-0"
-            src={post.profileImage}
+            className="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer"
+            src={authorInfo.profilePictureUrl}
             alt="profile"
+            onClick={handleNavigateToProfile}
           />
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-gray-900 text-base leading-none">
+              <h3 
+                className="font-semibold text-gray-900 text-base leading-none cursor-pointer hover:underline"
+                onClick={handleNavigateToProfile}
+              >
                 {authorInfo.displayUsername}
               </h3>
               {post.level ? (
@@ -213,7 +227,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
 
       <div className="pl-[52px]">
         <p className="text-gray-800 mt-1">
-          {post.content}
+          {post.caption}
         </p>
 
           {/* Handle media display based on media_urls and media_type */}
@@ -365,7 +379,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
                 <div className="flex items-center justify-center h-full p-8">
                   <div className="text-center">
                     <p className="text-white text-lg leading-relaxed whitespace-pre-wrap">
-                      {post.content || 'No caption available'}
+                      {post.caption || ''}
                     </p>
                   </div>
                 </div>
@@ -378,16 +392,22 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
               <div className="flex items-center justify-between p-4 border-b">
                 <div className="flex items-center gap-3">
                   <img
-                    className="w-8 h-8 rounded-full"
-                    src={post.profileImage}
+                    className="w-8 h-8 rounded-full cursor-pointer"
+                    src={authorInfo.profilePictureUrl}
                     alt="profile"
+                    onClick={handleNavigateToProfile}
                     onError={(e) => {
                       e.target.src = DEFAULT_PROFILE_IMAGE;
                     }}
                   />
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-sm text-gray-900">{authorInfo.displayUsername}</h3>
+                      <h3 
+                        className="font-semibold text-sm text-gray-900 cursor-pointer hover:underline"
+                        onClick={handleNavigateToProfile}
+                      >
+                        {authorInfo.displayUsername}
+                      </h3>
                       {post.level ? (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 border border-gray-200">
                           {post.level}

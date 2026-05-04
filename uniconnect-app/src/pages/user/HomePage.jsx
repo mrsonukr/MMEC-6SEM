@@ -4,7 +4,7 @@ import Sidebar from "../../components/Sidebar";
 import PostInput from "../../components/PostInput";
 import PostCard from "../../components/PostCard";
 import Spinner from "../../components/Spinner";
-import { usernameAPI, storeUserProfileData } from "../../utils/api";
+import { usernameAPI, postsAPI, storeUserProfileData } from "../../utils/api";
 
 // Default profile image
 const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png';
@@ -98,59 +98,24 @@ export default function HomePage() {
         setLoadingMore(true);
       }
 
-      // Using JSONPlaceholder public API for testing
-      const response = await fetch(`https://jsonplaceholder.typicode.com/posts?_page=${pageNum}&_limit=10`);
-      const postsData = await response.json();
+      // Use the new Instagram-like feed API
+      const response = await postsAPI.getFeed({ page: pageNum, limit: 10 });
       
-      // Fetch user data for profile images
-      const usersResponse = await fetch('https://jsonplaceholder.typicode.com/users');
-      const usersData = await usersResponse.json();
-      
-      // Combine posts with user data and add additional fields
-      const formattedPosts = postsData.map((post, index) => {
-        const user = usersData[(index + (pageNum - 1) * 10) % usersData.length];
-        return {
-          id: post.id,
-          author: user.name,
-          time: `${Math.floor(Math.random() * 24) + 1} hours ago`,
-          content: post.body,
-          image: index % 2 === 0 ? `https://picsum.photos/seed/${post.id}/800/600.jpg` : null,
-          profileImage: `https://picsum.photos/seed/${user.name}/100/100.jpg`,
-          likes: Math.floor(Math.random() * 500) + 10,
-          comments: Math.floor(Math.random() * 50) + 1,
-          shares: Math.floor(Math.random() * 200) + 5
-        };
-      });
-      
-      if (isLoadMore) {
-        setPosts(prevPosts => [...prevPosts, ...formattedPosts]);
+      if (response.success && response.data) {
+        const newPosts = response.data.posts || [];
+        if (pageNum === 1) {
+          setPosts(newPosts);
+        } else {
+          setPosts(prev => [...prev, ...newPosts]);
+        }
+        setHasMore(response.data.pagination?.has_next || false);
       } else {
-        setPosts(formattedPosts);
+        console.error('Failed to fetch feed:', response.message);
+        if (pageNum === 1) setPosts([]);
       }
-
-      // Check if there are more posts to load
-      if (postsData.length < 10) {
-        setHasMore(false);
-      }
-      
     } catch (error) {
-      console.error('Error fetching posts:', error);
-      if (!isLoadMore) {
-        // Fallback to mock data if API fails
-        setPosts([
-          {
-            id: 1,
-            author: "Ann Levin",
-            time: "2 hours ago",
-            content: "Hello everybody! We are preparing a new Prada campaign. Here's a sneak peek ;)",
-            image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
-            profileImage: "https://randomuser.me/api/portraits/women/44.jpg",
-            likes: 149,
-            comments: 16,
-            shares: 539
-          }
-        ]);
-      }
+      console.error('Error fetching feed:', error);
+      if (pageNum === 1) setPosts([]);
     } finally {
       setLoading(false);
       setLoadingMore(false);
