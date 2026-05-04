@@ -19,10 +19,10 @@
   ],
   "vars": {
     "JWT_SECRET": "9f3c6e1b4d8a72f5c1e9a0b7d4f2c8e6a1b3d5f7e9c2a4b6d8f0a1c3e5b7d9f1",
-    "GOOGLE_CLIENT_ID": "605008985125-j0ju294k2n31dr1tbq3c2gd7g038qsa8.apps.googleusercontent.com",
-    "GOOGLE_CLIENT_SECRET": "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",
+    "GOOGLE_CLIENT_ID": "670280073292-51l9jmdb7kg4brg7o1m08il3iktebond.apps.googleusercontent.com",
+    "GOOGLE_CLIENT_SECRET": "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",
     "APP_BASE_URL": "https://backend.uniconnectmmu.workers.dev",
-    "FRONTEND_URL": "http://localhost:5173",
+    "FRONTEND_URL": "https://uc.mrsonu.in",
     "EMAIL_API_URL": "https://script.google.com/macros/s/AKfycbz3__wXOrDzQhuQEAAragM4hDw7e44efw93MZQ4T4TmqVGc1FAR2M7glr4CFmIEOmvn/exec"
   },
   "observability": {

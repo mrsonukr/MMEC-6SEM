@@ -159,6 +159,91 @@ export async function handleUsers(request, env, url, method) {
     });
   }
 
+  if (url.pathname === "/users/suggestions" && method === "GET") {
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return Response.json(
+        { success: false, message: "Authentication required." },
+        { status: 401 }
+      );
+    }
+
+    const session_id = authHeader.substring(7);
+    const session = await env.DB.prepare(
+      `SELECT user_id FROM sessions WHERE session_id = ? AND is_active = 1 AND expires_at > CURRENT_TIMESTAMP`
+    )
+      .bind(session_id)
+      .first();
+
+    if (!session) {
+      return Response.json(
+        { success: false, message: "Invalid or expired session." },
+        { status: 401 }
+      );
+    }
+
+    const me = await env.DB.prepare(`SELECT id FROM users WHERE id = ?`)
+      .bind(session.user_id)
+      .first();
+
+    if (!me) {
+      return Response.json(
+        { success: false, message: "User not found." },
+        { status: 404 }
+      );
+    }
+
+    const { results } = await env.DB.prepare(
+      `
+        SELECT id, username, full_name, profile_picture_url
+        FROM users
+        WHERE username IS NOT NULL
+          AND username != ''
+          AND id != ?
+        ORDER BY RANDOM()
+        LIMIT 20
+      `
+    )
+      .bind(me.id)
+      .all();
+
+    const userIds = (results || []).map((u) => u.id);
+    let connectedIds = new Set();
+    if (userIds.length > 0) {
+      const placeholders = userIds.map(() => "?").join(", ");
+      const { results: connectionRows } = await env.DB.prepare(
+        `
+          SELECT DISTINCT c1.following_id AS id
+          FROM connections c1
+          JOIN connections c2
+            ON c1.follower_id = c2.following_id
+           AND c1.following_id = c2.follower_id
+          WHERE c1.follower_id = ?
+            AND c1.following_id IN (${placeholders})
+        `
+      )
+        .bind(me.id, ...userIds)
+        .all();
+
+      connectedIds = new Set((connectionRows || []).map((r) => r.id));
+    }
+
+    const filteredResults = (results || [])
+      .filter((u) => !connectedIds.has(u.id))
+      .slice(0, 7);
+
+    return Response.json({
+      success: true,
+      results: filteredResults.map((u) => ({
+        username: u.username,
+        name: u.full_name,
+        dp: u.profile_picture_url || DEFAULT_DP_URL,
+        isConnected: false,
+        show_btn: String(u.id) !== String(me.id),
+      })),
+    });
+  }
+
   if (url.pathname === "/users" && method === "POST") {
     const body = await request.json();
     const { user_id, full_name, role, email, bio } = body;

@@ -180,6 +180,12 @@ export const usersAPI = {
       method: 'GET',
     });
   },
+
+  getSuggestions: async () => {
+    return apiRequest('/users/suggestions', {
+      method: 'GET',
+    });
+  },
 };
 
 export const connectionsAPI = {

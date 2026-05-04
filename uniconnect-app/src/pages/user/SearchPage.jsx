@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Sidebar from '../../components/Sidebar'
 import { Search, X, Loader2 } from 'lucide-react'
 import { usersAPI, connectionsAPI } from '../../utils/api'
@@ -6,18 +7,44 @@ import { usersAPI, connectionsAPI } from '../../utils/api'
 const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png'
 
 export default function SearchPage() {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const loadSuggestions = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError('')
+      const response = await usersAPI.getSuggestions()
+
+      if (response.success) {
+        setResults(response.results || [])
+      } else {
+        setResults([])
+        setError(response.message || 'Failed to load suggestions')
+      }
+    } catch (err) {
+      setResults([])
+      setError(err.message || 'Failed to load suggestions')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const hasLoadedSuggestions = useRef(false)
+
   useEffect(() => {
     const query = searchQuery.trim()
 
+    if (!query && !hasLoadedSuggestions.current) {
+      hasLoadedSuggestions.current = true
+      loadSuggestions()
+      return
+    }
+
     if (!query) {
-      setResults([])
-      setError('')
-      setLoading(false)
       return
     }
 
@@ -49,12 +76,11 @@ export default function SearchPage() {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [searchQuery])
+  }, [searchQuery, loadSuggestions])
 
   const handleClear = () => {
     setSearchQuery('')
-    setResults([])
-    setError('')
+    loadSuggestions()
   }
 
   const handleConnectToggle = async (user) => {
@@ -94,6 +120,12 @@ export default function SearchPage() {
     }
   }
 
+  const handleProfileClick = (username) => {
+    if (username) {
+      navigate(`/${username}`)
+    }
+  }
+
   return (
     <div className="h-screen flex overflow-hidden relative">
       <Sidebar />
@@ -125,11 +157,7 @@ export default function SearchPage() {
             </div>
           </div>
 
-          {!searchQuery.trim() ? (
-            <div className="text-center py-12 text-gray-500">
-              Start typing a name or username to find people.
-            </div>
-          ) : loading ? (
+          {loading && searchQuery.trim() ? (
             <div className="flex items-center justify-center py-12 text-gray-500 gap-2">
               <Loader2 className="w-5 h-5 animate-spin" />
               Searching...
@@ -140,55 +168,63 @@ export default function SearchPage() {
             </div>
           ) : results.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
-              No people found for "{searchQuery.trim()}"
+              {searchQuery.trim() ? `No people found for "${searchQuery.trim()}"` : 'Search for people to connect with.'}
             </div>
           ) : (
-            <div className="space-y-3">
-              {results.map((user, index) => (
-                <div key={`${user.username}-${index}`}>
-                  <div className="flex items-center justify-between p-3 rounded-lg">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={user.dp || DEFAULT_PROFILE_IMAGE}
-                        alt={user.name || user.username}
-                        className="w-10 h-10 rounded-full object-cover border border-gray-200"
-                        onError={(e) => {
-                          e.currentTarget.src = DEFAULT_PROFILE_IMAGE
-                        }}
-                      />
-                      <div className="min-w-0">
-                        <h3 className="font-medium text-gray-900 truncate">
-                          {user.name || user.username}
-                        </h3>
-                        <p className="text-sm text-gray-500 truncate">
-                          {user.username}
-                        </p>
+            <>
+              {!searchQuery.trim() && (
+                <div className="text-sm text-gray-500 mb-3">Suggested for you</div>
+              )}
+              <div className="space-y-3">
+                {results.map((user, index) => (
+                  <div key={`${user.username}-${index}`}>
+                    <div className="flex items-center justify-between p-3 rounded-lg">
+                      <div
+                        className="flex items-center gap-3 min-w-0 cursor-pointer p-1 rounded-lg"
+                        onClick={() => handleProfileClick(user.username)}
+                      >
+                        <img
+                          src={user.dp || DEFAULT_PROFILE_IMAGE}
+                          alt={user.name || user.username}
+                          className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                          onError={(e) => {
+                            e.currentTarget.src = DEFAULT_PROFILE_IMAGE
+                          }}
+                        />
+                        <div className="min-w-0">
+                          <h3 className="font-medium text-gray-900 truncate">
+                            {user.name || user.username}
+                          </h3>
+                          <p className="text-sm text-gray-500 truncate">
+                            {user.username}
+                          </p>
+                        </div>
                       </div>
+                      {user.show_btn !== false ? (
+                        !user.isConnected ? (
+                          <button
+                            onClick={() => handleConnectToggle(user)}
+                            className="px-4 py-1.5 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            Connect
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleConnectToggle(user)}
+                            className="px-4 py-1.5 bg-white text-black border border-gray-300 text-sm font-medium rounded-full hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                          >
+                            Disconnect
+                          </button>
+                        )
+                      ) : null}
                     </div>
-                    {user.show_btn !== false ? (
-                      !user.isConnected ? (
-                        <button
-                          onClick={() => handleConnectToggle(user)}
-                          className="px-4 py-1.5 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          Connect
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleConnectToggle(user)}
-                          className="px-4 py-1.5 bg-white text-black border border-gray-300 text-sm font-medium rounded-full hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          Disconnect
-                        </button>
-                      )
-                    ) : null}
+                    {index < results.length - 1 && (
+                      <div className="border-t border-gray-100"></div>
+                    )}
                   </div>
-                  {index < results.length - 1 && (
-                    <div className="border-t border-gray-100"></div>
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
