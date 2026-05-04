@@ -153,24 +153,34 @@ export async function uploadProfilePicture(request, env) {
       if (!ALLOWED_FILE_TYPES[fileType]) {
         return Response.json({ 
           success: false, 
-          message: `Invalid file type. Allowed types: ${Object.values(ALLOWED_FILE_TYPES).join(', ')}` 
+          message: `Invalid file type. Allowed types: ${Object.keys(ALLOWED_FILE_TYPES).join(', ')}` 
         }, { status: 400 });
       }
 
-      // Generate unique filename
-      const fileExtension = ALLOWED_FILE_TYPES[fileType];
-      const uniqueFilename = `${user.id}_${Date.now()}_${generateToken(8)}${fileExtension}`;
+      // Get file buffer
+      const arrayBuffer = await request.arrayBuffer();
+      
+      // Validate file size after conversion (must be under 10KB)
+      if (arrayBuffer.byteLength > TARGET_FILE_SIZE) {
+        return Response.json({ 
+          success: false, 
+          message: `File too large. Please compress image to under ${TARGET_FILE_SIZE / 1024}KB before uploading.` 
+        }, { status: 400 });
+      }
+
+      // Generate unique filename with .webp extension
+      const uniqueFilename = `${user.id}_${Date.now()}_${generateToken(8)}.webp`;
       const objectKey = `users/${user.id}/profile/${uniqueFilename}`;
 
-      // Upload to R2
-      const arrayBuffer = await request.arrayBuffer();
+      // Upload to R2 as WebP
       const uploadResult = await env.R2.put(objectKey, arrayBuffer, {
         httpMetadata: {
-          contentType: fileType,
+          contentType: 'image/webp',
         },
         customMetadata: {
           userId: user.id.toString(),
-          uploadedAt: new Date().toISOString()
+          uploadedAt: new Date().toISOString(),
+          originalType: fileType
         }
       });
 
