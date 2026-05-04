@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../../components/Sidebar'
-import { Search, X, Loader2 } from 'lucide-react'
+import { Search, X, ArrowLeft } from 'lucide-react'
+import Spinner from '../../components/Spinner'
 import { usersAPI, connectionsAPI } from '../../utils/api'
 
 const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png'
@@ -158,9 +159,8 @@ export default function SearchPage() {
           </div>
 
           {loading && searchQuery.trim() ? (
-            <div className="flex items-center justify-center py-12 text-gray-500 gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Searching...
+            <div className="flex items-center justify-center py-12">
+              <Spinner />
             </div>
           ) : error ? (
             <div className="text-center py-12 text-red-500">

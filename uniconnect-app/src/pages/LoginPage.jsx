@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { MoveRight, MoveLeft, Eye, EyeOff } from "lucide-react";
 import FloatingInput from "../components/ui/FloatingInput";
 import Button from "../components/ui/Button";
-import { usernameAPI } from "../utils/api";
+import Spinner from '../components/Spinner';
+import { usernameAPI, storeUserProfileData } from "../utils/api";
 
 const BASE = 'https://backend.uniconnectmmu.workers.dev'
 
@@ -88,6 +89,10 @@ export default function LoginPage() {
           clearOldSessionAndSetNew(data.session_id)
           navigate('/welcome')
         } else {
+          // Store username from login response
+          if (data.username) {
+            localStorage.setItem('username', data.username)
+          }
           // Backend says username exists, check username status and go to /
           await checkUsernameStatusAndRedirect(data.session_id)
         }
@@ -98,6 +103,32 @@ export default function LoginPage() {
       setErrorMsg('Network error. Please try again.')
     } finally {
       setLoading(false)
+    }
+  };
+
+  const getUserProfileAndRedirect = async (token) => {
+    try {
+      // Set the auth token
+      localStorage.setItem('authToken', token)
+      
+      // Fetch user profile using the new getMyProfile API
+      const response = await usernameAPI.getMyProfile()
+      if (response.success) {
+        const user = response.data || response.user || response
+        // Store username and profile pic URL separately in localStorage
+        storeUserProfileData(user)
+        // Cache user data
+        localStorage.setItem('user', JSON.stringify(user))
+        localStorage.setItem('userCacheTimestamp', Date.now().toString())
+        // Redirect to home
+        navigate('/')
+      } else {
+        // If profile fetch fails, redirect to welcome
+        navigate('/welcome')
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      navigate('/welcome')
     }
   };
 
@@ -254,7 +285,7 @@ export default function LoginPage() {
                 onClick={handleContinue}
                 disabled={loading}
               >
-                {loading ? 'Signing in...' : 'Continue'}
+                {loading ? <Spinner /> : 'Continue'}
               </Button>
 
               {/* Divider */}

@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
-import { MoveLeft, MoveRight, Eye, EyeOff } from 'lucide-react'
-import FloatingInput from '../components/ui/FloatingInput'
+import { useState, useRef, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { MoveRight } from 'lucide-react'
 import Button from '../components/ui/Button'
+import FloatingInput from '../components/ui/FloatingInput'
+import Spinner from '../components/Spinner'
 
 const BASE = 'https://backend.uniconnectmmu.workers.dev'
 
@@ -183,7 +184,7 @@ export default function ResetPassword() {
             onClick={handleSubmit}
             disabled={loading || done}
           >
-            {loading ? 'Saving...' : 'Reset Password'}
+            {loading ? <Spinner /> : 'Reset Password'}
           </Button>
 
         </div>

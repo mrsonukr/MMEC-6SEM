@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Heart, MessageCircle, Send, ArrowUp, MoreHorizontal, Edit, Trash2, Share2, Eye, EyeOff, MessageSquareOff, Flag, UserMinus, Loader2 } from "lucide-react";
+import { Heart, MessageCircle, Send, ArrowUp, MoreHorizontal, Edit, Trash2, Share2, Eye, EyeOff, MessageSquareOff, Flag, UserMinus } from "lucide-react";
 import { postsAPI } from '../utils/api';
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination } from "swiper/modules";
+import Spinner from './Spinner';
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -484,7 +485,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
                 disabled={isDeleting}
               >
                 {isDeleting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Spinner />
                 ) : (
                   'Delete'
                 )}

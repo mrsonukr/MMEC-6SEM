@@ -3,7 +3,8 @@ import { Plus } from "lucide-react";
 import Sidebar from "../../components/Sidebar";
 import PostInput from "../../components/PostInput";
 import PostCard from "../../components/PostCard";
-import { usernameAPI } from "../../utils/api";
+import Spinner from "../../components/Spinner";
+import { usernameAPI, storeUserProfileData } from "../../utils/api";
 
 // Default profile image
 const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png';
@@ -45,6 +46,8 @@ export default function HomePage() {
         try {
           const parsedUser = JSON.parse(cachedUser);
           setUser(parsedUser);
+          // Store username and profile pic URL separately from cached data
+          storeUserProfileData(parsedUser);
           return; // Use cache if it's fresh
         } catch (error) {
           console.error('Error parsing cached user data:', error);
@@ -52,13 +55,16 @@ export default function HomePage() {
       }
     }
 
-    // Fetch fresh data if no cache or cache is expired
+    // Fetch fresh data using the logged-in user's profile API
     try {
-      const response = await usernameAPI.getUserProfile();
+      const response = await usernameAPI.getMyProfile();
       if (response.success) {
-        setUser(normalizeProfileUser(response));
+        const normalizedUser = normalizeProfileUser(response);
+        setUser(normalizedUser);
+        // Store username and profile pic URL separately in localStorage
+        storeUserProfileData(normalizedUser);
         // Cache the user data with timestamp
-        localStorage.setItem('user', JSON.stringify(normalizeProfileUser(response)));
+        localStorage.setItem('user', JSON.stringify(normalizedUser));
         localStorage.setItem('userCacheTimestamp', now.toString());
       }
     } catch (error) {
@@ -186,8 +192,8 @@ export default function HomePage() {
           {/* Posts */}
           <div className="space-y-4">
             {loading ? (
-              <div className="text-center py-8 text-gray-500">
-                Loading posts...
+              <div className="flex items-center justify-center py-8">
+                <Spinner />
               </div>
             ) : posts.length > 0 ? (
               <>
@@ -195,8 +201,8 @@ export default function HomePage() {
                   <PostCard key={post.id} post={post} />
                 ))}
                 {loadingMore && (
-                  <div className="text-center py-4 text-gray-500">
-                    Loading more posts...
+                  <div className="flex items-center justify-center py-4">
+                    <Spinner />
                   </div>
                 )}
                 {!hasMore && posts.length > 0 && (

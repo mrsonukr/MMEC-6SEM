@@ -7,6 +7,52 @@ const getAuthToken = () => {
   return localStorage.getItem('authToken');
 };
 
+// Store username in localStorage
+export const setUsername = (username) => {
+  localStorage.setItem('username', username);
+};
+
+// Get username from localStorage
+export const getUsername = () => {
+  return localStorage.getItem('username');
+};
+
+// Store profile picture URL in localStorage
+export const setProfilePictureUrl = (url) => {
+  localStorage.setItem('profilePictureUrl', url);
+};
+
+// Get profile picture URL from localStorage
+export const getProfilePictureUrl = () => {
+  return localStorage.getItem('profilePictureUrl');
+};
+
+// Store user profile data (username and profile pic) in localStorage
+export const storeUserProfileData = (user) => {
+  if (user) {
+    // Extract username from various possible fields
+    const username = user.username || user.user?.username || '';
+    setUsername(username);
+    
+    // Extract profile picture URL from various possible fields
+    const profilePicUrl = 
+      user.profile_picture_url ||
+      user.profile_picture ||
+      user.avatar_url ||
+      user.avatar ||
+      user.url ||
+      user.user?.profile_picture_url ||
+      user.user?.profile_picture ||
+      user.user?.avatar_url ||
+      user.user?.avatar ||
+      user.user?.url ||
+      '';
+    setProfilePictureUrl(profilePicUrl);
+    
+    console.log('Stored user profile data:', { username, profilePicUrl });
+  }
+};
+
 // Generic API request function
 const apiRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -66,6 +112,13 @@ export const usernameAPI = {
   // Check if user has username set
   checkUsernameStatus: async () => {
     return apiRequest('/auth/username-status', {
+      method: 'GET',
+    });
+  },
+
+  // Get current logged-in user profile
+  getMyProfile: async () => {
+    return apiRequest('/auth/profile', {
       method: 'GET',
     });
   },

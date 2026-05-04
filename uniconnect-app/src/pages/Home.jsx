@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import Spinner from '../components/Spinner'
 
 const API = 'https://backend.uniconnectmmu.workers.dev/users'
 
@@ -226,7 +227,9 @@ export default function Home() {
           </div>
 
           {loading ? (
-            <div className="text-center py-10 text-gray-400 text-sm">Loading...</div>
+            <div className="flex items-center justify-center py-10">
+              <Spinner />
+            </div>
           ) : users.length === 0 ? (
             <div className="text-center py-10 text-gray-400 text-sm">No users found.</div>
           ) : (

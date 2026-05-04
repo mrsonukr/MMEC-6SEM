@@ -15,7 +15,7 @@ const bottomItems = [
   { name: 'Settings', icon: Settings, path: '/settings' },
 ]
 
-function NavItem({ item, isCollapsed, index, onCollapse }) {
+function NavItem({ item }) {
   const Icon = item.icon
   const location = useLocation()
   const isActive = location.pathname === item.path
@@ -81,7 +81,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation - Vertical Line */}
-      <div className="flex-1 py-6 bg-gray-50 flex items-center">
+      <div className="flex-1 py-6  flex items-center">
         <nav className="space-y-4">
           {menuItems.map((item) => (
             <NavItem

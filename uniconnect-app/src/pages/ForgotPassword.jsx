@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MoveLeft, MoveRight } from 'lucide-react'
 import FloatingInput from '../components/ui/FloatingInput'
+import Spinner from '../components/Spinner'
 import Button from '../components/ui/Button'
 
 const BASE = 'https://backend.uniconnectmmu.workers.dev'
@@ -155,7 +156,7 @@ export default function ForgotPassword() {
             disabled={loading || cooldown > 0 || maxLimit}
           >
             {loading
-              ? 'Sending...'
+              ? <Spinner />
               : maxLimit
                 ? 'Limit reached — try after 24h'
                 : sent && cooldown > 0

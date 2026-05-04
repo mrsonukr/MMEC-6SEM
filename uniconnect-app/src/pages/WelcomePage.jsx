@@ -192,7 +192,7 @@ export default function WelcomePage() {
             {/* USERNAME SUGGESTIONS */}
             <div className="mt-3">
               <p className="text-xs text-gray-500 mb-2">
-                {loadingSuggestions ? 'Loading suggestions...' : 'Suggestions:'}
+                {loadingSuggestions ? '' : 'Suggestions:'}
               </p>
               <div className="flex gap-2 overflow-x-auto max-h-8" style={scrollbarHideStyle}>
                 {(username ? generateLocalSuggestions(username) : suggestions).map((suggestion, index) => (

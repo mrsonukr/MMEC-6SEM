@@ -7,7 +7,7 @@ import DropdownMenu from '../../components/DropdownMenu'
 import ProfilePictureUpload from '../../components/ProfilePictureUpload'
 import Spinner from '../../components/Spinner'
 import { MapPin, Briefcase, GraduationCap, Plus, Edit3, ExternalLink, Award, Users, MoreHorizontal } from 'lucide-react'
-import { usernameAPI, postsAPI } from '../../utils/api'
+import { usernameAPI, postsAPI, storeUserProfileData } from '../../utils/api'
 
 // Default profile image
 const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png'
@@ -66,16 +66,21 @@ export default function Profile() {
           const cacheAge = now - parseInt(cacheTimestamp)
           if (cacheAge < 30 * 1000) {
             setUser(currentUser)
+            // Store username and profile pic URL separately from cached data
+            storeUserProfileData(currentUser)
             setLoading(false)
             return
           }
         }
 
         if (!routeUsername) {
-          const response = await usernameAPI.getUserProfile()
+          // Fetch logged-in user's own profile
+          const response = await usernameAPI.getMyProfile()
           if (response.success) {
             const normalizedUser = normalizeProfileUser(response)
             setUser(normalizedUser)
+            // Store username and profile pic URL separately in localStorage
+            storeUserProfileData(normalizedUser)
             // Cache the user data with timestamp
             localStorage.setItem('user', JSON.stringify(normalizedUser))
             localStorage.setItem('userCacheTimestamp', now.toString())
@@ -83,6 +88,7 @@ export default function Profile() {
             console.error('Failed to load profile:', response.message)
           }
         } else {
+          // Fetch another user's profile by username
           const response = await usernameAPI.getUserProfileByUsername(routeUsername)
           if (response.success) {
             setUser(normalizeProfileUser(response))
@@ -105,10 +111,8 @@ export default function Profile() {
     const fetchUserPosts = async () => {
       if (!user?.id) return;
       
-      // Only show loading if this is not the initial load
-      if (posts.length > 0) {
-        setPostsLoading(true);
-      }
+      // Always show loading spinner
+      setPostsLoading(true);
       
       try {
         const response = await postsAPI.getUserPosts(user.id);
@@ -218,9 +222,8 @@ export default function Profile() {
         <div className="flex-1 p-4 bg-white border border-gray-300 rounded-t-3xl w-full max-w-2xl mx-auto overflow-y-auto pointer-events-auto no-scrollbar">
           
           {loading ? (
-            <div className="flex items-center justify-center py-12 text-gray-500 gap-2">
+            <div className="flex items-center justify-center py-12">
               <Spinner />
-              Loading...
             </div>
           ) : !user && routeUsername ? (
             <div className="text-center py-12 text-gray-600">
@@ -362,9 +365,8 @@ export default function Profile() {
                   {/* Posts */}
                   <div className="space-y-4">
                     {postsLoading ? (
-                      <div className="flex items-center justify-center py-8 text-gray-500 gap-2">
-                        <Spinner />
-                        Loading posts...
+                      <div className="flex items-center justify-center py-12">
+                        <Spinner size="3" />
                       </div>
                     ) : posts.length > 0 ? (
                       posts.map((post) => (

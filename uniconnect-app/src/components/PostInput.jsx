@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { MoreHorizontal, FileImage, BarChart3, Sparkles, ChevronDown } from "lucide-react";
-import { postsAPI } from '../utils/api';
+import { useState, useEffect, useRef } from 'react'
+import { X, Image, Send, Sparkles } from 'lucide-react'
+import { postsAPI } from '../utils/api'
+import Spinner from './Spinner';
 
 // Default profile image
 const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png';
@@ -255,11 +256,11 @@ export default function PostInput({ externalOpen, onModalClose, userProfile, onP
                           className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-black text-white rounded-full hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                         >
                           {isEnhancing ? (
-                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <Spinner />
                           ) : (
                             <Sparkles className="w-3.5 h-3.5" />
                           )}
-                          {isEnhancing ? 'Enhancing...' : 'AI Enhance'}
+                          {isEnhancing ? '' : 'AI Enhance'}
                         </button>
                       )}
                     </div>
@@ -364,9 +365,9 @@ export default function PostInput({ externalOpen, onModalClose, userProfile, onP
                     }`}
                   >
                     {isPosting ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <Spinner />
                     ) : isUploading ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <Spinner />
                     ) : (
                       'Post'
                     )}

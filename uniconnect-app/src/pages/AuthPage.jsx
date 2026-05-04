@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { usernameAPI } from '../utils/api'
+import Spinner from '../components/Spinner'
 
 export default function AuthPage() {
   const [searchParams] = useSearchParams()
@@ -81,10 +82,7 @@ export default function AuthPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 text-sm">Loading...</p>
-        </div>
+        <Spinner />
       </div>
     )
   }

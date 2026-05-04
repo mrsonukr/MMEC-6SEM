@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Sidebar from '../../components/Sidebar'
 import { Link } from 'react-router-dom'
-import { Search, X, Users, Loader2 } from 'lucide-react'
+import { Search, X, Users } from 'lucide-react'
+import Spinner from '../../components/Spinner'
 import { connectionsAPI } from '../../utils/api'
 
 const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png'
@@ -136,9 +137,8 @@ export default function ConnectionsPage() {
           ) : null}
 
           {loading ? (
-            <div className="flex items-center justify-center py-12 text-gray-500 gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Loading...
+            <div className="flex items-center justify-center py-12">
+              <Spinner />
             </div>
           ) : error && routeUsername && error.toLowerCase().includes('not found') ? (
             <div className="text-center py-12 text-gray-600">

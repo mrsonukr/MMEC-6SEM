@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Camera, X, Check, AlertCircle } from 'lucide-react';
 import { usernameAPI } from '../utils/api';
+import Spinner from './Spinner';
 
 // Default profile image
 const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png';
@@ -110,7 +111,7 @@ const ProfilePictureUpload = ({ currentImage, onUploadSuccess }) => {
         {/* Loading Spinner - Always visible during upload */}
         {isUploading && (
           <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <Spinner />
           </div>
         )}
 
