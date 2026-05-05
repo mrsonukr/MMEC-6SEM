@@ -216,7 +216,7 @@ export async function handlePosts(request, env, url, method) {
     }, { status: 201 });
   }
 
-  // GET feed (Instagram-like feed from mutual connections)
+  // GET feed (Instagram-like feed from mutual connections or all users)
   if (url.pathname === "/feed" && method === "GET") {
     if (!currentUser) {
       return Response.json({ 
@@ -228,25 +228,36 @@ export async function handlePosts(request, env, url, method) {
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 10;
     const offset = (page - 1) * limit;
+    const feedType = url.searchParams.get('feed_type') || 'connections'; // 'for-you' or 'connections'
 
-    // Get mutual connections (users who follow each other)
-    const mutualConnectionsQuery = `
-      SELECT DISTINCT c1.following_id as user_id
-      FROM connections c1
-      JOIN connections c2
-        ON c1.follower_id = c2.following_id
-       AND c1.following_id = c2.follower_id
-      WHERE c1.follower_id = ?
-    `;
+    let allUserIds = [];
     
-    const mutualConnections = await env.DB.prepare(mutualConnectionsQuery)
-      .bind(currentUser.id)
-      .all();
-    
-    const mutualConnectionIds = (mutualConnections.results || []).map(c => c.user_id);
-    
-    // Only show posts from mutual connections, not own posts
-    const allUserIds = mutualConnectionIds;
+    if (feedType === 'for-you') {
+      // For You: Get all users (latest posts from everyone)
+      const allUsersQuery = `
+        SELECT DISTINCT id as user_id
+        FROM users
+        WHERE username IS NOT NULL AND username != ''
+      `;
+      const allUsers = await env.DB.prepare(allUsersQuery).all();
+      allUserIds = (allUsers.results || []).map(u => u.user_id);
+    } else {
+      // Connections: Get mutual connections (users who follow each other)
+      const mutualConnectionsQuery = `
+        SELECT DISTINCT c1.following_id as user_id
+        FROM connections c1
+        JOIN connections c2
+          ON c1.follower_id = c2.following_id
+         AND c1.following_id = c2.follower_id
+        WHERE c1.follower_id = ? AND c1.following_id != ?
+      `;
+      
+      const mutualConnections = await env.DB.prepare(mutualConnectionsQuery)
+        .bind(currentUser.id, currentUser.id)
+        .all();
+      
+      allUserIds = (mutualConnections.results || []).map(c => c.user_id);
+    }
     
     // If no connections and no own posts, return empty feed
     if (allUserIds.length === 0) {

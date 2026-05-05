@@ -221,11 +221,14 @@ export const usernameAPI = {
 
 // Posts related API calls
 export const postsAPI = {
-  // Get feed (Instagram-like feed from mutual connections)
-  getFeed: async (params = {}) => {
-    const queryString = new URLSearchParams(params).toString();
-    const endpoint = queryString ? `/feed?${queryString}` : '/feed';
-    return apiRequest(endpoint, {
+  // Get feed (Instagram-like feed from mutual connections or all users)
+  getFeed: async ({ page = 1, limit = 20, feedType = 'connections' } = {}) => {
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('limit', String(limit));
+    params.set('feed_type', feedType);
+    
+    return apiRequest(`/feed?${params.toString()}`, {
       method: 'GET',
     });
   },

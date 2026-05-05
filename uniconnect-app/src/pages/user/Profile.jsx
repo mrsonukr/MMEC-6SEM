@@ -327,7 +327,7 @@ export default function Profile() {
                     <div className={`flex items-center gap-3 text-gray-500 text-sm ${user?.bio?.trim() ? 'mt-2' : 'mt-3'}`}>
                       <span className="flex items-center gap-1.5 text-xs bg-black text-white px-2 py-0.5 rounded-full">
                         <GraduationCap size={12} />
-                        Student
+                        {user?.role || 'Student'}
                       </span>
                       <span>•</span>
                       <Link
@@ -441,7 +441,7 @@ export default function Profile() {
                       ))
                     ) : (
                       <div className="text-center py-8 text-gray-500">
-                        <p>No posts yet. Create your first post above!</p>
+                        <p>No Posts Found!</p>
                       </div>
                     )}
                   </div>

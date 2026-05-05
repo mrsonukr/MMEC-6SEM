@@ -12,6 +12,9 @@ import Profile from './pages/user/Profile'
 import SearchPage from './pages/user/SearchPage'
 import ConnectionsPage from './pages/user/ConnectionsPage'
 import SettingsPage from './pages/user/SettingsPage'
+import EventsPage from './pages/user/EventsPage'
+import NotificationsPage from './pages/user/NotificationsPage'
+import MessagesPage from './pages/user/MessagesPage'
 
 // Routes that should not be accessible directly without proper context
 const protectedRoutes = {
@@ -44,7 +47,7 @@ const protectedRoutes = {
 const authRoutes = ['/login', '/login-new']
 
 // Routes that require authentication (user directory pages)
-const protectedAuthRoutes = ['/', '/profile', '/search', '/connections', '/settings', '/home']
+const protectedAuthRoutes = ['/', '/profile', '/search', '/connections', '/settings', '/home', '/conversations']
 
 // Check if user is logged in
 const isUserLoggedIn = () => {
@@ -75,7 +78,7 @@ const ProtectedRoute = ({ children, path }) => {
   return children
 }
 
-const noHeaderRoutes = ['/login-new', '/login', '/forgot-password', '/reset-password', '/', '/home', '/profile', '/search', '/connections', '/settings', '/welcome', '/auth']
+const noHeaderRoutes = ['/login-new', '/login', '/forgot-password', '/reset-password', '/', '/home', '/profile', '/search', '/connections', '/settings', '/welcome', '/auth', '/conversations']
 
 function Layout() {
   const location = useLocation()
@@ -153,6 +156,21 @@ function Layout() {
         <Route path="/settings" element={
           <ProtectedRoute path="/settings">
             <SettingsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/events" element={
+          <ProtectedRoute path="/events">
+            <EventsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/notifications" element={
+          <ProtectedRoute path="/notifications">
+            <NotificationsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/conversations" element={
+          <ProtectedRoute path="/conversations">
+            <MessagesPage />
           </ProtectedRoute>
         } />
         <Route path="/:username/connection" element={

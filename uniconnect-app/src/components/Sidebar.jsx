@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
-  Home, Search, Bell, User, Settings
+  Home, Search, Bell, User, Settings, Calendar, MessageSquare
 } from 'lucide-react'
 
 const baseMenuItems = [
   { name: 'Home',          icon: Home,         path: '/' },
   { name: 'Search',        icon: Search,       path: '/search' },
+  { name: 'Events',        icon: Calendar,     path: '/events' },
   { name: 'Notifications', icon: Bell,         path: '/notifications', badge: 5 },
+  { name: 'Messages',      icon: MessageSquare, path: '/conversations' },
   { name: 'Account',       icon: User,         path: '/profile' },
 ]
 

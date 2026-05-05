@@ -182,39 +182,12 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
     }
   };
 
-  const postMenuItems = currentUser && post.author_id === currentUser.id ? [
-    // Owner menu items
-    {
-      label: post.is_private ? 'Make Public' : 'Make Private',
-      icon: post.is_private ? <Eye size={16} /> : <EyeOff size={16} />,
-      onClick: () => console.log(`${post.is_private ? 'Make Public' : 'Make Private'} post:`, post.id)
-    },
-    {
-      label: 'Turn off commenting',
-      icon: <MessageSquareOff size={16} />,
-      onClick: () => console.log('Turn off commenting for post:', post.id)
-    },
-    {
-      label: 'Delete post',
-      icon: <Trash2 size={16} />,
-      onClick: () => {
-        setShowDeleteConfirm(true);
-        setShowPostDropdown(false);
-      },
-      danger: true
-    }
-  ] : [
-    // Other users' menu items
+  const postMenuItems = [
     {
       label: 'Report post',
       icon: <Flag size={16} />,
       onClick: () => console.log('Report post:', post.id),
       danger: true
-    },
-    {
-      label: 'Disconnect',
-      icon: <UserMinus size={16} />,
-      onClick: () => {}
     }
   ];
 
@@ -223,7 +196,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-3 min-w-0">
           <img
-            className="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer"
+            className="w-10 h-10 rounded-full flex-shrink-0 cursor-pointer object-cover"
             src={authorInfo.profilePictureUrl}
             alt="profile"
             onClick={handleNavigateToProfile}
@@ -283,7 +256,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
       </div>
 
       <div className="pl-[52px]">
-        <p className="text-gray-800 mt-1">
+        <p className="text-gray-800 mt-0.5">
           {post.caption}
         </p>
 
@@ -292,7 +265,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
             <div className="mt-3">
               {post.media_type === 'video' || post.media_type === 'videos' ? (
                 <video
-                  className="max-h-[400px] w-full object-contain rounded-lg"
+                  className="max-h-[400px] rounded-lg"
                   controls
                   src={post.media_urls[0]}
                   onClick={() => handleMediaClick(0)}
@@ -325,8 +298,8 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
                           />
                         )}
                         <img
-                          className={`object-cover rounded-lg ${
-                            displayMedia.length === 1 ? 'max-h-[400px] w-full' : 'h-48 w-full'
+                          className={`rounded-lg object-cover ${
+                            displayMedia.length === 1 ? 'max-h-[400px]' : 'h-48 w-full'
                           } ${!isLoaded ? 'absolute inset-0 opacity-0' : 'opacity-100 transition-opacity duration-300'}`}
                           src={url}
                           alt={`post media ${index + 1}`}
@@ -352,7 +325,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
           {post.image && !post.media_urls && (
             <div className="mt-3">
               <img
-                className="max-h-[400px] object-contain rounded-lg"
+                className="max-h-[400px] rounded-lg"
                 src={post.image}
                 alt="post"
                 onClick={() => handleMediaClick(0)}
@@ -392,7 +365,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
               {post.media_urls && post.media_urls.length > 0 ? (
                 post.media_type === 'video' || post.media_type === 'videos' ? (
                   <video 
-                    className="max-w-full max-h-full object-contain"
+                    className="max-w-full max-h-full"
                     controls
                     src={post.media_urls[0]}
                   >
@@ -413,7 +386,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
                           <img
                             src={mediaUrl}
                             alt={`Post media ${index + 1}`}
-                            className="max-w-full max-h-full object-contain"
+                            className="max-w-full max-h-full"
                           />
                         </div>
                       </SwiperSlide>
@@ -423,14 +396,14 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
                   <img 
                     src={post.media_urls[0]} 
                     alt="Post media" 
-                    className="max-w-full max-h-full object-contain"
+                    className="max-w-full max-h-full"
                   />
                 )
               ) : post.image ? (
                 <img 
                   src={post.image} 
                   alt="Post media" 
-                  className="max-w-full max-h-full object-contain"
+                  className="max-w-full max-h-full"
                 />
               ) : (
                 <div className="flex items-center justify-center h-full p-8">
@@ -449,7 +422,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
               <div className="flex items-center justify-between p-4 border-b">
                 <div className="flex items-center gap-3">
                   <img
-                    className="w-8 h-8 rounded-full cursor-pointer"
+                    className="w-8 h-8 rounded-full cursor-pointer object-cover"
                     src={authorInfo.profilePictureUrl}
                     alt="profile"
                     onClick={handleNavigateToProfile}
@@ -496,7 +469,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
                     {comments.map((comment) => (
                       <div key={comment.id} className="flex gap-3">
                         <img
-                          className="w-8 h-8 rounded-full"
+                          className="w-8 h-8 rounded-full object-cover"
                           src={comment.author?.profile_picture_url || DEFAULT_PROFILE_IMAGE}
                           alt={comment.author?.username}
                           onError={(e) => {
@@ -554,7 +527,7 @@ export default function PostCard({ post, currentUser, onDeletePost }) {
 
                 <div className="flex items-center gap-3">
                   <img
-                    className="w-8 h-8 rounded-full"
+                    className="w-8 h-8 rounded-full object-cover"
                     src={currentUser?.profile_picture_url || DEFAULT_PROFILE_IMAGE}
                     alt="Your profile"
                     onError={(e) => {

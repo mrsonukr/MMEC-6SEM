@@ -27,11 +27,20 @@ export default function HomePage() {
   const [hasMore, setHasMore] = useState(true);
   const [openPostModal, setOpenPostModal] = useState(false);
   const [user, setUser] = useState(null);
+  const [activeTab, setActiveTab] = useState('for-you');
 
   useEffect(() => {
     fetchPosts();
     fetchUserProfile();
   }, []);
+
+  useEffect(() => {
+    // Reset page and fetch posts when tab changes
+    setPage(1);
+    setPosts([]);
+    setHasMore(true);
+    fetchPosts(1, false);
+  }, [activeTab]);
 
   const fetchUserProfile = async () => {
     // Check if user data is already cached in localStorage
@@ -98,8 +107,20 @@ export default function HomePage() {
         setLoadingMore(true);
       }
 
-      // Use the new Instagram-like feed API
-      const response = await postsAPI.getFeed({ page: pageNum, limit: 10 });
+      // Use different API based on active tab
+      let response;
+      console.log('Fetching posts for tab:', activeTab);
+      if (activeTab === 'for-you') {
+        // For You: Latest posts from all users
+        console.log('Calling API with feedType: for-you');
+        response = await postsAPI.getFeed({ page: pageNum, limit: 10, feedType: 'for-you' });
+      } else if (activeTab === 'connections') {
+        // Connections: Posts only from mutual connections
+        console.log('Calling API with feedType: connections');
+        response = await postsAPI.getFeed({ page: pageNum, limit: 10, feedType: 'connections' });
+      }
+      
+      console.log('API response:', response);
       
       if (response.success && response.data) {
         const newPosts = response.data.posts || [];
@@ -135,9 +156,22 @@ export default function HomePage() {
       <div className="flex-1 flex flex-col absolute inset-0 pointer-events-none">
         {/* Top Tabs */}
         <div className="flex gap-8 font-medium text-lg p-4 justify-center text-[#a9aba6] pointer-events-auto">
-          <a href="#">For You</a>
-          <a href="#">Connections</a>
-          <a href="#">Favorites</a>
+          <button
+            onClick={() => setActiveTab('for-you')}
+            className={`transition-colors ${
+              activeTab === 'for-you' ? 'text-black' : 'text-[#a9aba6] hover:text-black'
+            }`}
+          >
+            For You
+          </button>
+          <button
+            onClick={() => setActiveTab('connections')}
+            className={`transition-colors ${
+              activeTab === 'connections' ? 'text-black' : 'text-[#a9aba6] hover:text-black'
+            }`}
+          >
+            Connections
+          </button>
         </div>
 
         {/* Plus Button */}
