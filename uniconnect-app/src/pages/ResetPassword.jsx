@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { MoveRight } from 'lucide-react'
+import { MoveRight, MoveLeft, Eye, EyeOff } from 'lucide-react'
 import Button from '../components/ui/Button'
 import FloatingInput from '../components/ui/FloatingInput'
 import Spinner from '../components/Spinner'

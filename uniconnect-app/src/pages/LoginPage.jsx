@@ -70,6 +70,13 @@ export default function LoginPage() {
     setStep("password");
   };
 
+  const handleEmailKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleNext();
+    }
+  };
+
   const handleContinue = async () => {
     if (!password.trim()) { setPasswordError(true); passwordRef.current?.focus(); return; }
     setPasswordError(false);
@@ -103,6 +110,13 @@ export default function LoginPage() {
       setErrorMsg('Network error. Please try again.')
     } finally {
       setLoading(false)
+    }
+  };
+
+  const handlePasswordKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleContinue();
     }
   };
 
@@ -219,6 +233,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setEmailError(false); }}
+                  onKeyDown={handleEmailKeyDown}
                   autoFocus
                   showError={emailError}
                 />
@@ -261,6 +276,7 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setPasswordError(false); }}
+                  onKeyDown={handlePasswordKeyDown}
                   autoFocus
                   showError={passwordError}
                 />

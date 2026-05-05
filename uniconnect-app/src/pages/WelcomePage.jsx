@@ -97,6 +97,47 @@ export default function WelcomePage() {
     return () => clearTimeout(timer)
   }, [username])
 
+  const handleSubmit = async () => {
+    if (!username.trim()) {
+      setUsernameError('Username is required')
+      return
+    }
+    if (username.length < 3) {
+      setUsernameError('Username must be at least 3 characters')
+      return
+    }
+    if (username.length > 20) {
+      setUsernameError('Username must be less than 20 characters')
+      return
+    }
+
+    setIsSubmitting(true)
+    setUsernameError('')
+
+    try {
+      const response = await usernameAPI.setUsername(username)
+      if (response.success) {
+        // Store username in localStorage
+        localStorage.setItem('username', username)
+        // Navigate to home page
+        navigate('/')
+      } else {
+        setUsernameError(response.message || 'Failed to set username')
+      }
+    } catch (error) {
+      setUsernameError('Network error. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
+
   const handleSuggestionClick = (suggestion) => {
     setUsername(suggestion)
   }
@@ -170,6 +211,7 @@ export default function WelcomePage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                onKeyDown={handleKeyDown}
                 onKeyPress={handleKeyPress}
                 placeholder="Enter your username"
                 className={`w-full pl-6 pr-4 py-3 border-b ${usernameError ? 'border-red-500' : 'border-gray-300'} bg-transparent text-gray-800 focus:outline-none peer`}

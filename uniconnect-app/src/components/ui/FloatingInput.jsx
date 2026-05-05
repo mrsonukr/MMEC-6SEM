@@ -20,6 +20,7 @@ const FloatingInput = forwardRef(function FloatingInput({
     type = "text",
     value,
     onChange,
+    onKeyDown,
     id,
     autoFocus = false,
     color = "black",
@@ -43,6 +44,7 @@ const FloatingInput = forwardRef(function FloatingInput({
                 type={type}
                 value={value}
                 onChange={onChange}
+                onKeyDown={onKeyDown}
                 placeholder=" "
                 autoFocus={autoFocus}
                 className={`

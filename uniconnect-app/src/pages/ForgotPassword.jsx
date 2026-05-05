@@ -82,6 +82,13 @@ export default function ForgotPassword() {
     sendLink('/auth/forgot-password')
   }
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
+
   const handleResend = () => {
     sendLink('/auth/resend-reset')
   }
@@ -140,6 +147,7 @@ export default function ForgotPassword() {
                 setCooldown(0)
                 clearInterval(timerRef.current)
               }}
+              onKeyDown={handleKeyDown}
               autoFocus
               showError={emailError || emailNotFound}
             />
