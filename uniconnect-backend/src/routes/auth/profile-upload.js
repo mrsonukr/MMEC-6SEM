@@ -12,8 +12,8 @@ const ALLOWED_FILE_TYPES = {
 // Maximum file size (5MB) before processing
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-// Target file size (10KB)
-const TARGET_FILE_SIZE = 10 * 1024;
+// Target file size (25KB)
+const TARGET_FILE_SIZE = 25 * 1024;
 
 export async function uploadProfilePicture(request, env) {
   try {

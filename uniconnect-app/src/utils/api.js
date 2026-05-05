@@ -2,8 +2,8 @@
 
 const API_BASE_URL = 'https://backend.uniconnectmmu.workers.dev';
 
-// Image compression utility - compress image to under 10KB
-export const compressImage = async (file, maxSizeKB = 10) => {
+// Image compression utility - compress image to under 25KB
+export const compressImage = async (file, maxSizeKB = 25) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
