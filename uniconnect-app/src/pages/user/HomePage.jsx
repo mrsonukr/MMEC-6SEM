@@ -7,7 +7,7 @@ import Spinner from "../../components/Spinner";
 import { usernameAPI, postsAPI, storeUserProfileData } from "../../utils/api";
 
 // Default profile image
-const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png';
+const DEFAULT_PROFILE_IMAGE = 'https://backend.uniconnectmmu.workers.dev/download/users/7/profile/7_1777890781131_YOR4ATDF.jpg';
 
 const normalizeProfileUser = (payload) => {
   const rawUser = payload?.user || payload?.data?.user || payload?.data || null;

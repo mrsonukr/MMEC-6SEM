@@ -5,7 +5,7 @@ import { Search, X, ArrowLeft } from 'lucide-react'
 import Spinner from '../../components/Spinner'
 import { usersAPI, connectionsAPI } from '../../utils/api'
 
-const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png'
+const DEFAULT_PROFILE_IMAGE = 'https://backend.uniconnectmmu.workers.dev/download/users/7/profile/7_1777890781131_YOR4ATDF.jpg'
 
 export default function SearchPage() {
   const navigate = useNavigate()

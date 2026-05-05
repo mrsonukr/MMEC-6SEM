@@ -9,7 +9,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-const DEFAULT_PROFILE_IMAGE = '/images/default_profile.png';
+const DEFAULT_PROFILE_IMAGE = 'https://backend.uniconnectmmu.workers.dev/download/users/7/profile/7_1777890781131_YOR4ATDF.jpg';
 
 const getAuthorInfo = (post) => {
   const author = typeof post.author === 'object' ? post.author : null;
